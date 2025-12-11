@@ -1,1 +1,27 @@
 /.claude
+
+# Rust
+target/
+Cargo.lock
+
+# WASM build output
+pkg/
+
+# Vite build output
+dist/
+
+# Node.js
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

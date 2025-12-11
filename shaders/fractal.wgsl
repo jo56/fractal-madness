@@ -1,0 +1,409 @@
+// Fractal compute shader
+// Renders Mandelbrot, Julia, and Burning Ship fractals
+
+struct FractalParams {
+    center: vec2<f32>,
+    zoom: f32,
+    max_iter: u32,
+    power: f32,
+    escape_radius: f32,
+    fractal_type: u32,
+    color_scheme: u32,
+    julia_c: vec2<f32>,
+    flags: u32,        // bit 0: smooth, bit 1: invert, bit 2: offset
+    _padding: vec3<u32>,
+}
+
+@group(0) @binding(0) var<uniform> params: FractalParams;
+@group(0) @binding(1) var output: texture_storage_2d<rgba8unorm, write>;
+
+const PI: f32 = 3.14159265359;
+const FRACTAL_MANDELBROT: u32 = 0u;
+const FRACTAL_JULIA: u32 = 1u;
+const FRACTAL_BURNING_SHIP: u32 = 2u;
+
+// Flag bit masks
+const FLAG_SMOOTH: u32 = 1u;
+const FLAG_INVERT: u32 = 2u;
+const FLAG_OFFSET: u32 = 4u;
+
+// Complex number operations
+fn cmul(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
+    return vec2<f32>(
+        a.x * b.x - a.y * b.y,
+        a.x * b.y + a.y * b.x
+    );
+}
+
+fn cpow(z: vec2<f32>, n: f32) -> vec2<f32> {
+    let r = length(z);
+    let theta = atan2(z.y, z.x);
+    let rn = pow(r, n);
+    return vec2<f32>(
+        rn * cos(n * theta),
+        rn * sin(n * theta)
+    );
+}
+
+// Fractal iteration functions
+fn iterate_mandelbrot(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+fn iterate_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = z_init;
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+fn iterate_burning_ship(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        z = vec2<f32>(abs(z.x), abs(z.y));
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Color palette functions
+fn palette_classic(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.5 + 0.5 * cos(2.0 * PI * (t + 0.0)),
+        0.5 + 0.5 * cos(2.0 * PI * (t + 0.33)),
+        0.5 + 0.5 * cos(2.0 * PI * (t + 0.67))
+    );
+}
+
+fn palette_fire(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        min(1.0, t * 3.0),
+        max(0.0, min(1.0, t * 3.0 - 1.0)),
+        max(0.0, t * 3.0 - 2.0)
+    );
+}
+
+fn palette_ocean(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.0,
+        0.3 + 0.4 * t,
+        0.5 + 0.5 * t
+    );
+}
+
+fn palette_rainbow(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.5 + 0.5 * sin(2.0 * PI * t),
+        0.5 + 0.5 * sin(2.0 * PI * (t + 0.33)),
+        0.5 + 0.5 * sin(2.0 * PI * (t + 0.67))
+    );
+}
+
+fn palette_grayscale(t: f32) -> vec3<f32> {
+    return vec3<f32>(t, t, t);
+}
+
+fn palette_electric(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        t,
+        t * t,
+        1.0
+    );
+}
+
+fn palette_neon(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.5 + 0.5 * sin(2.0 * PI * t * 2.0),
+        0.5 + 0.5 * sin(2.0 * PI * t * 3.0),
+        0.5 + 0.5 * sin(2.0 * PI * t * 5.0)
+    );
+}
+
+fn palette_sunset(t: f32) -> vec3<f32> {
+    let a = vec3<f32>(0.5, 0.5, 0.5);
+    let b = vec3<f32>(0.5, 0.5, 0.5);
+    let c = vec3<f32>(1.0, 0.7, 0.4);
+    let d = vec3<f32>(0.0, 0.15, 0.2);
+    return a + b * cos(2.0 * PI * (c * t + d));
+}
+
+fn palette_forest(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.1 + 0.2 * t,
+        0.3 + 0.5 * t,
+        0.1 + 0.15 * t
+    );
+}
+
+fn palette_lava(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        min(1.0, 0.5 + t),
+        max(0.0, t - 0.3) * 1.5,
+        0.0
+    );
+}
+
+fn palette_ice(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.7 + 0.3 * t,
+        0.85 + 0.15 * t,
+        1.0
+    );
+}
+
+fn palette_plasma(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.5 + 0.5 * sin(3.0 * PI * t),
+        0.5 + 0.5 * sin(3.0 * PI * t + 2.094),
+        0.5 + 0.5 * sin(3.0 * PI * t + 4.188)
+    );
+}
+
+fn palette_cosmic(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.1 + 0.4 * pow(t, 0.5),
+        0.0 + 0.2 * t,
+        0.3 + 0.7 * pow(t, 0.7)
+    );
+}
+
+fn palette_autumn(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.8 + 0.2 * sin(PI * t),
+        0.3 + 0.4 * t,
+        0.1 + 0.1 * t
+    );
+}
+
+fn palette_matrix(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.0,
+        0.2 + 0.8 * t,
+        0.0
+    );
+}
+
+fn palette_vintage(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.6 + 0.3 * t,
+        0.5 + 0.3 * t,
+        0.4 + 0.2 * t
+    );
+}
+
+fn palette_candy(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.5 + 0.5 * sin(4.0 * PI * t),
+        0.5 + 0.5 * sin(4.0 * PI * t + 1.0),
+        0.5 + 0.5 * sin(4.0 * PI * t + 2.0)
+    );
+}
+
+fn palette_metal(t: f32) -> vec3<f32> {
+    let base = 0.3 + 0.7 * t;
+    return vec3<f32>(
+        base,
+        base * 0.9,
+        base * 0.8
+    );
+}
+
+fn palette_toxic(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.2 * t,
+        0.5 + 0.5 * t,
+        0.1 + 0.2 * t
+    );
+}
+
+fn palette_aurora(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.2 + 0.3 * sin(2.0 * PI * t),
+        0.5 + 0.5 * sin(2.0 * PI * t + 1.5),
+        0.3 + 0.5 * sin(2.0 * PI * t + 3.0)
+    );
+}
+
+fn palette_desert(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.8 + 0.2 * t,
+        0.6 + 0.2 * t,
+        0.3 + 0.2 * t
+    );
+}
+
+fn palette_deep_sea(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.0 + 0.1 * t,
+        0.1 + 0.3 * t,
+        0.3 + 0.5 * t
+    );
+}
+
+fn palette_magma(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.1 + 0.9 * pow(t, 0.5),
+        0.0 + 0.5 * pow(t, 1.5),
+        0.2 + 0.3 * pow(t, 3.0)
+    );
+}
+
+fn palette_bw_bands(t: f32) -> vec3<f32> {
+    let v = step(0.5, fract(t * 10.0));
+    return vec3<f32>(v, v, v);
+}
+
+fn palette_psychedelic(t: f32) -> vec3<f32> {
+    return vec3<f32>(
+        0.5 + 0.5 * sin(10.0 * PI * t),
+        0.5 + 0.5 * sin(10.0 * PI * t + 2.094),
+        0.5 + 0.5 * sin(10.0 * PI * t + 4.188)
+    );
+}
+
+fn palette_thermal(t: f32) -> vec3<f32> {
+    if (t < 0.33) {
+        return vec3<f32>(0.0, 0.0, t * 3.0);
+    } else if (t < 0.67) {
+        let s = (t - 0.33) * 3.0;
+        return vec3<f32>(s, 0.0, 1.0 - s);
+    } else {
+        let s = (t - 0.67) * 3.0;
+        return vec3<f32>(1.0, s, 0.0);
+    }
+}
+
+fn get_color(t: f32, scheme: u32) -> vec3<f32> {
+    switch(scheme) {
+        case 0u: { return palette_classic(t); }
+        case 1u: { return palette_fire(t); }
+        case 2u: { return palette_ocean(t); }
+        case 3u: { return palette_rainbow(t); }
+        case 4u: { return palette_grayscale(t); }
+        case 5u: { return palette_electric(t); }
+        case 6u: { return palette_neon(t); }
+        case 7u: { return palette_sunset(t); }
+        case 8u: { return palette_forest(t); }
+        case 9u: { return palette_lava(t); }
+        case 10u: { return palette_ice(t); }
+        case 11u: { return palette_plasma(t); }
+        case 12u: { return palette_cosmic(t); }
+        case 13u: { return palette_autumn(t); }
+        case 14u: { return palette_matrix(t); }
+        case 15u: { return palette_vintage(t); }
+        case 16u: { return palette_candy(t); }
+        case 17u: { return palette_metal(t); }
+        case 18u: { return palette_toxic(t); }
+        case 19u: { return palette_aurora(t); }
+        case 20u: { return palette_desert(t); }
+        case 21u: { return palette_deep_sea(t); }
+        case 22u: { return palette_magma(t); }
+        case 23u: { return palette_bw_bands(t); }
+        case 24u: { return palette_psychedelic(t); }
+        case 25u: { return palette_thermal(t); }
+        default: { return palette_classic(t); }
+    }
+}
+
+@compute @workgroup_size(8, 8)
+fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+    let dims = textureDimensions(output);
+
+    if (global_id.x >= dims.x || global_id.y >= dims.y) {
+        return;
+    }
+
+    // Map pixel to complex plane
+    let aspect = f32(dims.x) / f32(dims.y);
+    let uv = vec2<f32>(
+        (f32(global_id.x) / f32(dims.x) - 0.5) * 2.0 * aspect,
+        (f32(global_id.y) / f32(dims.y) - 0.5) * 2.0
+    );
+
+    let c = params.center + uv / params.zoom;
+
+    // Iterate based on fractal type
+    var result: vec2<f32>;
+    switch(params.fractal_type) {
+        case FRACTAL_MANDELBROT: {
+            result = iterate_mandelbrot(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_JULIA: {
+            result = iterate_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_BURNING_SHIP: {
+            result = iterate_burning_ship(c, params.power, params.max_iter, params.escape_radius);
+        }
+        default: {
+            result = iterate_mandelbrot(c, params.power, params.max_iter, params.escape_radius);
+        }
+    }
+
+    let iter = result.x;
+    let z_mag2 = result.y;
+
+    // Calculate color
+    var color: vec3<f32>;
+
+    if (iter >= f32(params.max_iter)) {
+        // Point is in the set
+        color = vec3<f32>(0.0, 0.0, 0.0);
+    } else {
+        var t: f32;
+
+        if ((params.flags & FLAG_SMOOTH) != 0u) {
+            // Smooth coloring
+            let log_zn = log(z_mag2) / 2.0;
+            let nu = log(log_zn / log(2.0)) / log(params.power);
+            t = (iter + 1.0 - nu) / f32(params.max_iter);
+        } else {
+            t = iter / f32(params.max_iter);
+        }
+
+        // Apply offset
+        if ((params.flags & FLAG_OFFSET) != 0u) {
+            t = fract(t * 5.0);
+        }
+
+        // Apply invert
+        if ((params.flags & FLAG_INVERT) != 0u) {
+            t = 1.0 - t;
+        }
+
+        color = get_color(t, params.color_scheme);
+    }
+
+    textureStore(output, vec2<i32>(global_id.xy), vec4<f32>(color, 1.0));
+}
