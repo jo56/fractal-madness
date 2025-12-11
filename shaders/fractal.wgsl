@@ -3,18 +3,18 @@
 // Uses fragment shader for WebGL2 compatibility
 
 struct FractalParams {
-    center: vec2<f32>,
-    zoom: f32,
-    max_iter: u32,
-    power: f32,
-    escape_radius: f32,
-    fractal_type: u32,
-    color_scheme: u32,
-    julia_c: vec2<f32>,
-    flags: u32,        // bit 0: smooth, bit 1: invert, bit 2: offset
-    _pad: u32,
-    resolution: vec2<f32>,  // canvas width, height
-    _pad2: vec2<u32>,
+    center: vec2<f32>,          // offset 0  (8 bytes)
+    zoom: f32,                   // offset 8  (4 bytes)
+    max_iter: u32,               // offset 12 (4 bytes)
+    power: f32,                  // offset 16 (4 bytes)
+    escape_radius: f32,          // offset 20 (4 bytes)
+    fractal_type: u32,           // offset 24 (4 bytes)
+    color_scheme: u32,           // offset 28 (4 bytes)
+    julia_c: vec2<f32>,          // offset 32 (8 bytes)
+    flags: u32,                  // offset 40 (4 bytes) - bit 0: smooth, bit 1: invert, bit 2: offset
+    _pad: u32,                   // offset 44 (4 bytes)
+    resolution: vec2<f32>,       // offset 48 (8 bytes) - canvas width, height
+    _pad2: vec2<u32>,            // offset 56 (8 bytes) - pad to 64 bytes total
 }
 
 struct VertexOutput {
@@ -25,9 +25,22 @@ struct VertexOutput {
 @group(0) @binding(0) var<uniform> params: FractalParams;
 
 const PI: f32 = 3.14159265359;
+
+// Classic escape-time fractals
 const FRACTAL_MANDELBROT: u32 = 0u;
 const FRACTAL_JULIA: u32 = 1u;
 const FRACTAL_BURNING_SHIP: u32 = 2u;
+const FRACTAL_TRICORN: u32 = 3u;
+const FRACTAL_BUFFALO: u32 = 4u;
+const FRACTAL_CELTIC: u32 = 5u;
+const FRACTAL_PERPENDICULAR_MANDELBROT: u32 = 6u;
+const FRACTAL_PERPENDICULAR_BURNING_SHIP: u32 = 7u;
+const FRACTAL_HEART: u32 = 8u;
+// Julia variants
+const FRACTAL_TRICORN_JULIA: u32 = 9u;
+const FRACTAL_BUFFALO_JULIA: u32 = 10u;
+const FRACTAL_CELTIC_JULIA: u32 = 11u;
+const FRACTAL_BURNING_SHIP_JULIA: u32 = 12u;
 
 // Flag bit masks
 const FLAG_SMOOTH: u32 = 1u;
@@ -110,6 +123,195 @@ fn iterate_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, esc
 
 fn iterate_burning_ship(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
     var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        z = vec2<f32>(abs(z.x), abs(z.y));
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Tricorn (Mandelbar): z = conj(z)^2 + c
+fn iterate_tricorn(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        z = vec2<f32>(z.x, -z.y); // conjugate
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Tricorn Julia: z = conj(z)^2 + c (starting from z_init)
+fn iterate_tricorn_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = z_init;
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        z = vec2<f32>(z.x, -z.y); // conjugate
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Buffalo: z = abs(z)^2 - z + c
+fn iterate_buffalo(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        let az = vec2<f32>(abs(z.x), abs(z.y));
+        if (power == 2.0) {
+            z = cmul(az, az) - z + c;
+        } else {
+            z = cpow(az, power) - z + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Buffalo Julia
+fn iterate_buffalo_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = z_init;
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        let az = vec2<f32>(abs(z.x), abs(z.y));
+        if (power == 2.0) {
+            z = cmul(az, az) - z + c;
+        } else {
+            z = cpow(az, power) - z + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Celtic: z = (abs(real(z^2)), imag(z^2)) + c
+fn iterate_celtic(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        if (power == 2.0) {
+            let z2 = cmul(z, z);
+            z = vec2<f32>(abs(z2.x), z2.y) + c;
+        } else {
+            let zp = cpow(z, power);
+            z = vec2<f32>(abs(zp.x), zp.y) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Celtic Julia
+fn iterate_celtic_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = z_init;
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        if (power == 2.0) {
+            let z2 = cmul(z, z);
+            z = vec2<f32>(abs(z2.x), z2.y) + c;
+        } else {
+            let zp = cpow(z, power);
+            z = vec2<f32>(abs(zp.x), zp.y) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Perpendicular Mandelbrot: z = (abs(z.x), z.y)^2 + c
+fn iterate_perpendicular_mandelbrot(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        z = vec2<f32>(abs(z.x), z.y);
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Perpendicular Burning Ship: z = (z.x, abs(z.y))^2 + c
+fn iterate_perpendicular_burning_ship(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        z = vec2<f32>(z.x, abs(z.y));
+        if (power == 2.0) {
+            z = cmul(z, z) + c;
+        } else {
+            z = cpow(z, power) + c;
+        }
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Heart: z = (z.x * abs(z.x), z.y^2) + c - creates heart-like shapes
+fn iterate_heart(c: vec2<f32>, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        let new_x = z.x * z.x - z.y * z.y + c.x;
+        let new_y = 2.0 * abs(z.x) * z.y + c.y;
+        z = vec2<f32>(new_x, new_y);
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Burning Ship Julia
+fn iterate_burning_ship_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = z_init;
     var i: u32 = 0u;
     let escape2 = escape_radius * escape_radius;
 
@@ -384,6 +586,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
     // Iterate based on fractal type
     var result: vec2<f32>;
+
     switch(params.fractal_type) {
         case FRACTAL_MANDELBROT: {
             result = iterate_mandelbrot(c, params.power, params.max_iter, params.escape_radius);
@@ -393,6 +596,36 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
         }
         case FRACTAL_BURNING_SHIP: {
             result = iterate_burning_ship(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_TRICORN: {
+            result = iterate_tricorn(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_BUFFALO: {
+            result = iterate_buffalo(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_CELTIC: {
+            result = iterate_celtic(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_PERPENDICULAR_MANDELBROT: {
+            result = iterate_perpendicular_mandelbrot(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_PERPENDICULAR_BURNING_SHIP: {
+            result = iterate_perpendicular_burning_ship(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_HEART: {
+            result = iterate_heart(c, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_TRICORN_JULIA: {
+            result = iterate_tricorn_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_BUFFALO_JULIA: {
+            result = iterate_buffalo_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_CELTIC_JULIA: {
+            result = iterate_celtic_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_BURNING_SHIP_JULIA: {
+            result = iterate_burning_ship_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
         }
         default: {
             result = iterate_mandelbrot(c, params.power, params.max_iter, params.escape_radius);
@@ -413,8 +646,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
         if ((params.flags & FLAG_SMOOTH) != 0u) {
             // Smooth coloring
-            let log_zn = log(z_mag2) / 2.0;
-            let nu = log(log_zn / log(2.0)) / log(params.power);
+            let log_zn = log(max(z_mag2, 1.0)) / 2.0;
+            let nu = log(max(log_zn / log(2.0), 1e-10)) / log(params.power);
             t = (iter + 1.0 - nu) / f32(params.max_iter);
         } else {
             t = iter / f32(params.max_iter);

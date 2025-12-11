@@ -1,23 +1,53 @@
 use bytemuck::{Pod, Zeroable};
 
 pub mod burning_ship;
+pub mod buffalo;
+pub mod celtic;
+pub mod heart;
 pub mod julia;
 pub mod mandelbrot;
+pub mod perpendicular;
+pub mod tricorn;
 
 /// Fractal type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum FractalType {
+    // Classic escape-time fractals
     Mandelbrot = 0,
     Julia = 1,
     BurningShip = 2,
+    Tricorn = 3,
+    Buffalo = 4,
+    Celtic = 5,
+    PerpendicularMandelbrot = 6,
+    PerpendicularBurningShip = 7,
+    Heart = 8,
+    // Julia variants
+    TricornJulia = 9,
+    BuffaloJulia = 10,
+    CelticJulia = 11,
+    BurningShipJulia = 12,
 }
 
 impl FractalType {
     pub fn all() -> &'static [FractalType] {
         &[
+            // Mandelbrot family
             FractalType::Mandelbrot,
+            FractalType::Tricorn,
+            FractalType::Buffalo,
+            FractalType::Celtic,
+            FractalType::PerpendicularMandelbrot,
+            FractalType::PerpendicularBurningShip,
+            FractalType::Heart,
+            // Julia family
             FractalType::Julia,
+            FractalType::TricornJulia,
+            FractalType::BuffaloJulia,
+            FractalType::CelticJulia,
+            FractalType::BurningShipJulia,
+            // Ship family
             FractalType::BurningShip,
         ]
     }
@@ -27,27 +57,50 @@ impl FractalType {
             FractalType::Mandelbrot => "Mandelbrot",
             FractalType::Julia => "Julia",
             FractalType::BurningShip => "Burning Ship",
+            FractalType::Tricorn => "Tricorn",
+            FractalType::Buffalo => "Buffalo",
+            FractalType::Celtic => "Celtic",
+            FractalType::PerpendicularMandelbrot => "Perpendicular Mandelbrot",
+            FractalType::PerpendicularBurningShip => "Perpendicular Ship",
+            FractalType::Heart => "Heart",
+            FractalType::TricornJulia => "Tricorn Julia",
+            FractalType::BuffaloJulia => "Buffalo Julia",
+            FractalType::CelticJulia => "Celtic Julia",
+            FractalType::BurningShipJulia => "Burning Ship Julia",
         }
+    }
+
+    /// Returns true if this fractal type uses the julia_c parameter
+    pub fn needs_julia_c(&self) -> bool {
+        matches!(
+            self,
+            FractalType::Julia
+                | FractalType::TricornJulia
+                | FractalType::BuffaloJulia
+                | FractalType::CelticJulia
+                | FractalType::BurningShipJulia
+        )
     }
 }
 
 /// Fractal rendering parameters
 /// Must match the WGSL struct layout exactly and stay 16-byte aligned for uniforms
+/// Total size: 64 bytes
 #[repr(C, align(16))]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
 pub struct FractalParams {
-    pub center: [f32; 2],       // offset 0
-    pub zoom: f32,               // offset 8
-    pub max_iter: u32,           // offset 12
-    pub power: f32,              // offset 16
-    pub escape_radius: f32,      // offset 20
-    pub fractal_type: u32,       // offset 24
-    pub color_scheme: u32,       // offset 28
-    pub julia_c: [f32; 2],       // offset 32
-    pub flags: u32,              // offset 40
-    pub _pad: u32,               // offset 44 (alignment for vec2)
-    pub resolution: [f32; 2],    // offset 48 (canvas width, height)
-    pub _pad2: [u32; 2],         // offset 56 (pad to 64 bytes)
+    pub center: [f32; 2],       // offset 0  (8 bytes)
+    pub zoom: f32,               // offset 8  (4 bytes)
+    pub max_iter: u32,           // offset 12 (4 bytes)
+    pub power: f32,              // offset 16 (4 bytes)
+    pub escape_radius: f32,      // offset 20 (4 bytes)
+    pub fractal_type: u32,       // offset 24 (4 bytes)
+    pub color_scheme: u32,       // offset 28 (4 bytes)
+    pub julia_c: [f32; 2],       // offset 32 (8 bytes)
+    pub flags: u32,              // offset 40 (4 bytes)
+    pub _pad: u32,               // offset 44 (4 bytes)
+    pub resolution: [f32; 2],    // offset 48 (8 bytes)
+    pub _pad2: [u32; 2],         // offset 56 (8 bytes) - pad to 64 bytes total
 }
 
 impl Default for FractalParams {
@@ -80,6 +133,16 @@ impl FractalParams {
             0 => FractalType::Mandelbrot,
             1 => FractalType::Julia,
             2 => FractalType::BurningShip,
+            3 => FractalType::Tricorn,
+            4 => FractalType::Buffalo,
+            5 => FractalType::Celtic,
+            6 => FractalType::PerpendicularMandelbrot,
+            7 => FractalType::PerpendicularBurningShip,
+            8 => FractalType::Heart,
+            9 => FractalType::TricornJulia,
+            10 => FractalType::BuffaloJulia,
+            11 => FractalType::CelticJulia,
+            12 => FractalType::BurningShipJulia,
             _ => FractalType::Mandelbrot,
         }
     }
@@ -157,6 +220,30 @@ impl FractalParams {
             }
             FractalType::BurningShip => {
                 self.center = [-0.4, -0.6];
+            }
+            FractalType::Tricorn => {
+                self.center = [-0.3, 0.0];
+            }
+            FractalType::Buffalo => {
+                self.center = [-0.5, 0.0];
+            }
+            FractalType::Celtic => {
+                self.center = [-0.5, 0.0];
+            }
+            FractalType::PerpendicularMandelbrot => {
+                self.center = [-0.5, 0.0];
+            }
+            FractalType::PerpendicularBurningShip => {
+                self.center = [-0.5, -0.5];
+            }
+            FractalType::Heart => {
+                self.center = [0.0, 0.0];
+            }
+            FractalType::TricornJulia
+            | FractalType::BuffaloJulia
+            | FractalType::CelticJulia
+            | FractalType::BurningShipJulia => {
+                self.center = [0.0, 0.0];
             }
         }
     }

@@ -7,7 +7,10 @@ use winit::window::Window;
 
 use crate::color::ColorScheme;
 use crate::fractal::julia::julia_presets;
-use crate::fractal::{burning_ship, julia, mandelbrot, FractalParams, FractalType};
+use crate::fractal::{
+    buffalo, burning_ship, celtic, heart, julia, mandelbrot,
+    perpendicular, tricorn, FractalParams, FractalType,
+};
 
 pub struct UiState {
     ctx: Context,
@@ -97,10 +100,10 @@ impl UiState {
     fn parameters_section(ui: &mut Ui, params: &mut FractalParams) {
         ui.label("Parameters");
 
-        // Iterations
+        // Iterations (increased to 10000)
         let mut max_iter = params.max_iter as f32;
         ui.add(
-            Slider::new(&mut max_iter, 10.0..=5000.0)
+            Slider::new(&mut max_iter, 10.0..=10000.0)
                 .logarithmic(true)
                 .text("Iterations"),
         );
@@ -202,6 +205,16 @@ impl UiState {
             FractalType::Mandelbrot => mandelbrot::presets(),
             FractalType::Julia => julia::presets(),
             FractalType::BurningShip => burning_ship::presets(),
+            FractalType::Tricorn => tricorn::presets(),
+            FractalType::Buffalo => buffalo::presets(),
+            FractalType::Celtic => celtic::presets(),
+            FractalType::PerpendicularMandelbrot => perpendicular::mandelbrot_presets(),
+            FractalType::PerpendicularBurningShip => perpendicular::burning_ship_presets(),
+            FractalType::Heart => heart::presets(),
+            FractalType::TricornJulia => tricorn::julia_presets(),
+            FractalType::BuffaloJulia => buffalo::julia_presets(),
+            FractalType::CelticJulia => celtic::julia_presets(),
+            FractalType::BurningShipJulia => burning_ship::presets(),
         };
 
         egui::Grid::new("location_presets_grid")
@@ -280,7 +293,8 @@ impl UiState {
                 Self::parameters_section(ui, params);
                 ui.separator();
 
-                if params.get_fractal_type() == FractalType::Julia {
+                // Show Julia constant for all Julia-type fractals
+                if params.get_fractal_type().needs_julia_c() {
                     Self::julia_section(ui, params);
                     ui.separator();
                 }
