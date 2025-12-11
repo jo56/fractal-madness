@@ -68,14 +68,18 @@ async fn run_inner() -> Result<(), String> {
             .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
             .ok_or("Failed to find canvas element")?;
 
-        Arc::new(
+        let window = Arc::new(
             WindowBuilder::new()
                 .with_title("Fractal Madness")
                 .with_inner_size(PhysicalSize::new(1280, 720))
-                .with_canvas(Some(canvas))
+                .with_canvas(Some(canvas.clone()))
                 .build(&event_loop)
                 .map_err(|e| format!("Failed to create window: {e}"))?,
-        )
+        );
+
+        resize_canvas_to_window(&canvas, &window);
+
+        window
     };
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -137,6 +141,8 @@ async fn run_inner() -> Result<(), String> {
                             renderer.resize(&gpu.device, new_size.width, new_size.height);
                         }
                         WindowEvent::RedrawRequested => {
+                            #[cfg(target_arch = "wasm32")]
+                            sync_canvas_size(&window, &mut gpu);
                             let ui_changed = ui.prepare(&window, &mut params);
                             if ui_changed {
                                 renderer.mark_dirty();
@@ -174,6 +180,8 @@ async fn run_inner() -> Result<(), String> {
                     }
                 }
                 Event::AboutToWait => {
+                    #[cfg(target_arch = "wasm32")]
+                    sync_canvas_size(&window, &mut gpu);
                     window.request_redraw();
                 }
                 _ => {}
@@ -266,4 +274,51 @@ async fn run_inner() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[cfg(target_arch = "wasm32")]
+fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::window::Window) {
+    let dpr = web_sys::window()
+        .map(|w| w.device_pixel_ratio())
+        .unwrap_or(1.0);
+
+    let logical_width = canvas.client_width().max(1) as f64;
+    let logical_height = canvas.client_height().max(1) as f64;
+
+    let width = (logical_width * dpr).round().max(1.0) as u32;
+    let height = (logical_height * dpr).round().max(1.0) as u32;
+
+    canvas.set_width(width);
+    canvas.set_height(height);
+    let _ = window.request_inner_size(PhysicalSize::new(width, height));
+}
+
+#[cfg(target_arch = "wasm32")]
+fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
+    use wasm_bindgen::JsCast;
+
+    let Some(canvas) = web_sys::window()
+        .and_then(|win| win.document())
+        .and_then(|doc| doc.get_element_by_id("screen"))
+        .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
+    else {
+        return;
+    };
+
+    let dpr = web_sys::window()
+        .map(|w| w.device_pixel_ratio())
+        .unwrap_or(1.0);
+
+    let logical_width = canvas.client_width().max(1) as f64;
+    let logical_height = canvas.client_height().max(1) as f64;
+
+    let width = (logical_width * dpr).round().max(1.0) as u32;
+    let height = (logical_height * dpr).round().max(1.0) as u32;
+
+    if (width, height) != gpu.size {
+        canvas.set_width(width);
+        canvas.set_height(height);
+        let _ = window.request_inner_size(PhysicalSize::new(width, height));
+        gpu.resize(width, height);
+    }
 }
