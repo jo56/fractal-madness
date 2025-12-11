@@ -13,6 +13,8 @@ struct FractalParams {
     julia_c: vec2<f32>,
     flags: u32,        // bit 0: smooth, bit 1: invert, bit 2: offset
     _pad: u32,
+    resolution: vec2<f32>,  // canvas width, height
+    _pad2: vec2<u32>,
 }
 
 struct VertexOutput {
@@ -372,7 +374,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
     // Map to complex plane centered at params.center
     // uv goes 0->1, we want -1 to 1 range, then scale by aspect and zoom
-    let aspect = 16.0 / 9.0;  // Will be overridden by actual aspect from position
+    let aspect = params.resolution.x / params.resolution.y;
     let ndc = vec2<f32>(
         (uv.x - 0.5) * 2.0 * aspect,
         (uv.y - 0.5) * 2.0

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use winit::{
-    dpi::PhysicalSize,
+    dpi::{LogicalSize, PhysicalSize},
     event::{ElementState, Event, MouseScrollDelta, WindowEvent},
     event_loop::EventLoop,
     window::WindowBuilder,
@@ -143,6 +143,10 @@ async fn run_inner() -> Result<(), String> {
                         WindowEvent::RedrawRequested => {
                             #[cfg(target_arch = "wasm32")]
                             sync_canvas_size(&window, &mut gpu);
+
+                            // Update resolution for shader aspect ratio
+                            params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
+
                             let ui_changed = ui.prepare(&window, &mut params);
                             if ui_changed {
                                 renderer.mark_dirty();
@@ -228,6 +232,9 @@ async fn run_inner() -> Result<(), String> {
                                 renderer.resize(&gpu.device, new_size.width, new_size.height);
                             }
                             WindowEvent::RedrawRequested => {
+                                // Update resolution for shader aspect ratio
+                                params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
+
                                 let ui_changed = ui.prepare(&window, &mut params);
                                 if ui_changed {
                                     renderer.mark_dirty();
@@ -290,7 +297,11 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
 
     canvas.set_width(width);
     canvas.set_height(height);
-    let _ = window.request_inner_size(PhysicalSize::new(width, height));
+
+    // Keep winit's logical window size aligned with the CSS size of the canvas.
+    // Using logical (CSS) pixels here avoids inflating the layout when DPR > 1.
+    let logical_size = LogicalSize::new(logical_width, logical_height);
+    let _ = window.request_inner_size(logical_size);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -318,7 +329,9 @@ fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
     if (width, height) != gpu.size {
         canvas.set_width(width);
         canvas.set_height(height);
-        let _ = window.request_inner_size(PhysicalSize::new(width, height));
+
+        let logical_size = LogicalSize::new(logical_width, logical_height);
+        let _ = window.request_inner_size(logical_size);
         gpu.resize(width, height);
     }
 }

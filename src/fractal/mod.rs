@@ -36,16 +36,18 @@ impl FractalType {
 #[repr(C, align(16))]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
 pub struct FractalParams {
-    pub center: [f32; 2],
-    pub zoom: f32,
-    pub max_iter: u32,
-    pub power: f32,
-    pub escape_radius: f32,
-    pub fractal_type: u32,
-    pub color_scheme: u32,
-    pub julia_c: [f32; 2],
-    pub flags: u32,
-    pub _pad: u32,  // Explicit padding to reach 48 bytes (multiple of 16)
+    pub center: [f32; 2],       // offset 0
+    pub zoom: f32,               // offset 8
+    pub max_iter: u32,           // offset 12
+    pub power: f32,              // offset 16
+    pub escape_radius: f32,      // offset 20
+    pub fractal_type: u32,       // offset 24
+    pub color_scheme: u32,       // offset 28
+    pub julia_c: [f32; 2],       // offset 32
+    pub flags: u32,              // offset 40
+    pub _pad: u32,               // offset 44 (alignment for vec2)
+    pub resolution: [f32; 2],    // offset 48 (canvas width, height)
+    pub _pad2: [u32; 2],         // offset 56 (pad to 64 bytes)
 }
 
 impl Default for FractalParams {
@@ -61,6 +63,8 @@ impl Default for FractalParams {
             julia_c: [-0.7, 0.27015],
             flags: 1, // smooth coloring on by default
             _pad: 0,
+            resolution: [1280.0, 720.0], // default, will be updated each frame
+            _pad2: [0, 0],
         }
     }
 }

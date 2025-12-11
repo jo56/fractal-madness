@@ -4,10 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fractal Madness</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <canvas id="screen"></canvas>
+    <div class="app">
+      <header class="header">Fractal Madness</header>
+      <main class="canvas-container">
+        <canvas id="screen"></canvas>
+      </main>
+      <footer class="footer">
+        <span>Scroll to zoom</span>
+        <span class="sep"></span>
+        <span>Drag to pan</span>
+      </footer>
+    </div>
+
     <div id="error-banner" class="hidden">
       <h2>WebGPU Not Supported</h2>
       <p>
@@ -15,6 +32,7 @@
         Chrome 113+, Edge 113+, or Firefox Nightly with WebGPU enabled.
       </p>
     </div>
+
     <script type="module" src="main.ts"></script>
   </body>
 </html>
