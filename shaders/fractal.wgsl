@@ -1,5 +1,6 @@
-// Fractal compute shader
+// Fractal fragment shader
 // Renders Mandelbrot, Julia, and Burning Ship fractals
+// Uses fragment shader for WebGL2 compatibility
 
 struct FractalParams {
     center: vec2<f32>,
@@ -11,11 +12,15 @@ struct FractalParams {
     color_scheme: u32,
     julia_c: vec2<f32>,
     flags: u32,        // bit 0: smooth, bit 1: invert, bit 2: offset
-    _padding: vec3<u32>,
+    _pad: u32,
+}
+
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) uv: vec2<f32>,
 }
 
 @group(0) @binding(0) var<uniform> params: FractalParams;
-@group(0) @binding(1) var output: texture_storage_2d<rgba8unorm, write>;
 
 const PI: f32 = 3.14159265359;
 const FRACTAL_MANDELBROT: u32 = 0u;
@@ -26,6 +31,27 @@ const FRACTAL_BURNING_SHIP: u32 = 2u;
 const FLAG_SMOOTH: u32 = 1u;
 const FLAG_INVERT: u32 = 2u;
 const FLAG_OFFSET: u32 = 4u;
+
+@vertex
+fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
+    // Generate fullscreen triangle (3 vertices, no vertex buffer)
+    var positions = array<vec2<f32>, 3>(
+        vec2<f32>(-1.0, -1.0),
+        vec2<f32>(3.0, -1.0),
+        vec2<f32>(-1.0, 3.0)
+    );
+
+    var uvs = array<vec2<f32>, 3>(
+        vec2<f32>(0.0, 1.0),
+        vec2<f32>(2.0, 1.0),
+        vec2<f32>(0.0, -1.0)
+    );
+
+    var output: VertexOutput;
+    output.position = vec4<f32>(positions[vertex_index], 0.0, 1.0);
+    output.uv = uvs[vertex_index];
+    return output;
+}
 
 // Complex number operations
 fn cmul(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
@@ -337,22 +363,22 @@ fn get_color(t: f32, scheme: u32) -> vec3<f32> {
     }
 }
 
-@compute @workgroup_size(8, 8)
-fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    let dims = textureDimensions(output);
+@fragment
+fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    // Convert UV to normalized device coordinates
+    // UV: (0,0) bottom-left to (1,1) top-right after clipping
+    // We need to handle the oversized triangle
+    let uv = clamp(input.uv, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
 
-    if (global_id.x >= dims.x || global_id.y >= dims.y) {
-        return;
-    }
-
-    // Map pixel to complex plane
-    let aspect = f32(dims.x) / f32(dims.y);
-    let uv = vec2<f32>(
-        (f32(global_id.x) / f32(dims.x) - 0.5) * 2.0 * aspect,
-        (f32(global_id.y) / f32(dims.y) - 0.5) * 2.0
+    // Map to complex plane centered at params.center
+    // uv goes 0->1, we want -1 to 1 range, then scale by aspect and zoom
+    let aspect = 16.0 / 9.0;  // Will be overridden by actual aspect from position
+    let ndc = vec2<f32>(
+        (uv.x - 0.5) * 2.0 * aspect,
+        (uv.y - 0.5) * 2.0
     );
 
-    let c = params.center + uv / params.zoom;
+    let c = params.center + ndc / params.zoom;
 
     // Iterate based on fractal type
     var result: vec2<f32>;
@@ -405,5 +431,5 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         color = get_color(t, params.color_scheme);
     }
 
-    textureStore(output, vec2<i32>(global_id.xy), vec4<f32>(color, 1.0));
+    return vec4<f32>(color, 1.0);
 }

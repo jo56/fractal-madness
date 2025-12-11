@@ -46,7 +46,6 @@ fn show_error(msg: &str) {
                 if let Some(text) = banner.query_selector("p").ok().flatten() {
                     text.set_text_content(Some(msg));
                 }
-                // Remove hidden class by setting empty class (banner has no other classes)
                 if let Some(el) = banner.dyn_ref::<web_sys::HtmlElement>() {
                     el.set_class_name("");
                 }
@@ -58,7 +57,6 @@ fn show_error(msg: &str) {
 async fn run_inner() -> Result<(), String> {
     let event_loop = EventLoop::new().map_err(|e| format!("Failed to create event loop: {e}"))?;
 
-    // Create window using WindowBuilder
     #[cfg(target_arch = "wasm32")]
     let window = {
         use wasm_bindgen::JsCast;
@@ -89,24 +87,14 @@ async fn run_inner() -> Result<(), String> {
             .map_err(|e| format!("Failed to create window: {e}"))?,
     );
 
-    // Initialize WebGPU
     let mut gpu = WebGpuState::new(window.clone()).await?;
-
-    // Initialize renderer
     let mut renderer = FractalRenderer::new(&gpu.device, gpu.format, gpu.size.0, gpu.size.1);
-
-    // Initialize UI
     let mut ui = UiState::new(&gpu.device, gpu.format, &window);
-
-    // Initialize input state
     let mut input = InputState::new();
-
-    // Fractal parameters
     let mut params = FractalParams::default();
 
     log::info!("Initialization complete, starting render loop");
 
-    // Run the event loop
     #[cfg(target_arch = "wasm32")]
     {
         use winit::platform::web::EventLoopExtWebSys;
@@ -114,10 +102,8 @@ async fn run_inner() -> Result<(), String> {
         event_loop.spawn(move |event, target| {
             match event {
                 Event::WindowEvent { event, .. } => {
-                    // Let egui handle the event first
                     let consumed = ui.handle_window_event(&window, &event);
 
-                    // Handle events not consumed by egui
                     if !consumed {
                         match &event {
                             WindowEvent::MouseInput { state: btn_state, button, .. } => {
@@ -151,13 +137,11 @@ async fn run_inner() -> Result<(), String> {
                             renderer.resize(&gpu.device, new_size.width, new_size.height);
                         }
                         WindowEvent::RedrawRequested => {
-                            // Build UI and check for parameter changes
-                            let ui_changed = ui.build(&mut params);
+                            let ui_changed = ui.prepare(&window, &mut params);
                             if ui_changed {
                                 renderer.mark_dirty();
                             }
 
-                            // Render
                             if let Ok(output) = gpu.surface.get_current_texture() {
                                 let view = output.texture.create_view(&Default::default());
                                 let mut encoder = gpu.device.create_command_encoder(&Default::default());
@@ -236,7 +220,7 @@ async fn run_inner() -> Result<(), String> {
                                 renderer.resize(&gpu.device, new_size.width, new_size.height);
                             }
                             WindowEvent::RedrawRequested => {
-                                let ui_changed = ui.build(&mut params);
+                                let ui_changed = ui.prepare(&window, &mut params);
                                 if ui_changed {
                                     renderer.mark_dirty();
                                 }

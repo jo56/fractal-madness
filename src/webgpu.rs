@@ -21,9 +21,12 @@ impl WebGpuState {
         let size = window.inner_size();
         let scale_factor = window.scale_factor();
 
-        // Create wgpu instance
+        // Create wgpu instance - use WebGL for browser compatibility
         let instance = Instance::new(InstanceDescriptor {
-            backends: Backends::BROWSER_WEBGPU,
+            #[cfg(target_arch = "wasm32")]
+            backends: Backends::GL,
+            #[cfg(not(target_arch = "wasm32"))]
+            backends: Backends::all(),
             ..Default::default()
         });
 
@@ -69,12 +72,15 @@ impl WebGpuState {
 
         log::info!("Surface format: {:?}", format);
 
+        let width = size.width.max(1);
+        let height = size.height.max(1);
+
         // Configure surface
         let config = SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format,
-            width: size.width.max(1),
-            height: size.height.max(1),
+            width,
+            height,
             present_mode: PresentMode::AutoVsync,
             desired_maximum_frame_latency: 2,
             alpha_mode: caps.alpha_modes[0],
@@ -88,17 +94,17 @@ impl WebGpuState {
             surface,
             config,
             format,
-            size: (size.width, size.height),
+            size: (width, height),
             scale_factor,
         })
     }
 
     pub fn resize(&mut self, new_width: u32, new_height: u32) {
-        if new_width > 0 && new_height > 0 {
-            self.size = (new_width, new_height);
-            self.config.width = new_width;
-            self.config.height = new_height;
-            self.surface.configure(&self.device, &self.config);
-        }
+        let new_width = new_width.max(1);
+        let new_height = new_height.max(1);
+        self.size = (new_width, new_height);
+        self.config.width = new_width;
+        self.config.height = new_height;
+        self.surface.configure(&self.device, &self.config);
     }
 }

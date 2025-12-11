@@ -32,8 +32,8 @@ impl FractalType {
 }
 
 /// Fractal rendering parameters
-/// Must match the WGSL struct layout exactly
-#[repr(C)]
+/// Must match the WGSL struct layout exactly and stay 16-byte aligned for uniforms
+#[repr(C, align(16))]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
 pub struct FractalParams {
     pub center: [f32; 2],
@@ -45,7 +45,7 @@ pub struct FractalParams {
     pub color_scheme: u32,
     pub julia_c: [f32; 2],
     pub flags: u32,
-    pub _padding: [u32; 3],
+    pub _pad: u32,  // Explicit padding to reach 48 bytes (multiple of 16)
 }
 
 impl Default for FractalParams {
@@ -60,7 +60,7 @@ impl Default for FractalParams {
             color_scheme: 0,
             julia_c: [-0.7, 0.27015],
             flags: 1, // smooth coloring on by default
-            _padding: [0; 3],
+            _pad: 0,
         }
     }
 }

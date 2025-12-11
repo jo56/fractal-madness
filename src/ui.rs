@@ -1,4 +1,4 @@
-use egui::{Context, Slider, Ui};
+use egui::{ClippedPrimitive, Context, Slider, TexturesDelta, Ui};
 use egui_wgpu::wgpu::{CommandEncoder, Device, Queue, TextureFormat, TextureView};
 use egui_wgpu::{Renderer, ScreenDescriptor};
 use egui_winit::State;
@@ -13,7 +13,13 @@ pub struct UiState {
     ctx: Context,
     state: State,
     renderer: Renderer,
-    last_params: FractalParams,
+    pending_frame: Option<PreparedFrame>,
+}
+
+struct PreparedFrame {
+    textures_delta: TexturesDelta,
+    shapes: Vec<ClippedPrimitive>,
+    screen_descriptor: ScreenDescriptor,
 }
 
 impl UiState {
@@ -32,7 +38,7 @@ impl UiState {
             ctx,
             state,
             renderer,
-            last_params: FractalParams::default(),
+            pending_frame: None,
         }
     }
 
@@ -41,40 +47,34 @@ impl UiState {
         response.consumed
     }
 
-    /// Build the UI and return true if parameters changed
-    pub fn build(&mut self, params: &mut FractalParams) -> bool {
-        self.last_params = *params;
+    /// Run egui for this frame and stage paint jobs. Returns true if params changed.
+    pub fn prepare(&mut self, window: &Window, params: &mut FractalParams) -> bool {
+        let size = window.inner_size();
+        let screen_descriptor = ScreenDescriptor {
+            size_in_pixels: [size.width.max(1), size.height.max(1)],
+            pixels_per_point: window.scale_factor() as f32,
+        };
 
-        let ctx = self.ctx.clone();
-        egui::SidePanel::left("controls")
-            .resizable(true)
-            .default_width(280.0)
-            .show(&ctx, |ui| {
-                ui.heading("Fractal Madness");
-                ui.separator();
+        let raw_input = self.state.take_egui_input(window);
+        let params_before = *params;
+        let full_output = self.ctx.run(raw_input, |ctx| {
+            Self::build_ui(ctx, params);
+        });
 
-                Self::fractal_type_section(ui, params);
-                ui.separator();
+        self.state
+            .handle_platform_output(window, full_output.platform_output);
 
-                Self::parameters_section(ui, params);
-                ui.separator();
+        let shapes = self
+            .ctx
+            .tessellate(full_output.shapes, full_output.pixels_per_point);
 
-                if params.get_fractal_type() == FractalType::Julia {
-                    Self::julia_section(ui, params);
-                    ui.separator();
-                }
+        self.pending_frame = Some(PreparedFrame {
+            textures_delta: full_output.textures_delta,
+            shapes,
+            screen_descriptor,
+        });
 
-                Self::color_section(ui, params);
-                ui.separator();
-
-                Self::navigation_section(ui, params);
-                ui.separator();
-
-                Self::presets_section(ui, params);
-            });
-
-        // Check if params changed
-        !params_equal(&self.last_params, params)
+        !params_equal(&params_before, params)
     }
 
     fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams) {
@@ -215,52 +215,40 @@ impl UiState {
                         ui.end_row();
                     }
                 }
-            });
+        });
     }
 
+    /// Paint the previously prepared egui frame over the target view.
     pub fn render(
         &mut self,
         device: &Device,
         queue: &Queue,
         encoder: &mut CommandEncoder,
         output_view: &TextureView,
-        window: &Window,
+        _window: &Window,
         _format: TextureFormat,
     ) {
-        let screen_descriptor = ScreenDescriptor {
-            size_in_pixels: [
-                window.inner_size().width,
-                window.inner_size().height,
-            ],
-            pixels_per_point: window.scale_factor() as f32,
+        let Some(prepared) = self.pending_frame.take() else {
+            return;
         };
 
-        let raw_input = self.state.take_egui_input(window);
-        let full_output = self.ctx.run(raw_input, |_| {});
-
-        self.state.handle_platform_output(window, full_output.platform_output);
-
-        let tris = self
-            .ctx
-            .tessellate(full_output.shapes, full_output.pixels_per_point);
-
-        for (id, image_delta) in &full_output.textures_delta.set {
+        for (id, image_delta) in &prepared.textures_delta.set {
             self.renderer
                 .update_texture(device, queue, *id, image_delta);
         }
 
         self.renderer
-            .update_buffers(device, queue, encoder, &tris, &screen_descriptor);
+            .update_buffers(device, queue, encoder, &prepared.shapes, &prepared.screen_descriptor);
 
         {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&egui_wgpu::wgpu::RenderPassDescriptor {
                 label: Some("egui-render-pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(egui_wgpu::wgpu::RenderPassColorAttachment {
                     view: output_view,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
+                    ops: egui_wgpu::wgpu::Operations {
+                        load: egui_wgpu::wgpu::LoadOp::Load,
+                        store: egui_wgpu::wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -269,12 +257,42 @@ impl UiState {
             });
 
             self.renderer
-                .render(&mut render_pass, &tris, &screen_descriptor);
+                .render(&mut render_pass, &prepared.shapes, &prepared.screen_descriptor);
         }
 
-        for id in &full_output.textures_delta.free {
+        for id in &prepared.textures_delta.free {
             self.renderer.free_texture(id);
         }
+    }
+
+    /// Build egui widgets and return true if params changed.
+    fn build_ui(ctx: &Context, params: &mut FractalParams) {
+        egui::SidePanel::left("controls")
+            .resizable(true)
+            .default_width(280.0)
+            .show(ctx, |ui| {
+                ui.heading("Fractal Madness");
+                ui.separator();
+
+                Self::fractal_type_section(ui, params);
+                ui.separator();
+
+                Self::parameters_section(ui, params);
+                ui.separator();
+
+                if params.get_fractal_type() == FractalType::Julia {
+                    Self::julia_section(ui, params);
+                    ui.separator();
+                }
+
+                Self::color_section(ui, params);
+                ui.separator();
+
+                Self::navigation_section(ui, params);
+                ui.separator();
+
+                Self::presets_section(ui, params);
+            });
     }
 }
 
