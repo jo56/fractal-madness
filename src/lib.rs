@@ -71,7 +71,7 @@ async fn run_inner() -> Result<(), String> {
         let window = Arc::new(
             WindowBuilder::new()
                 .with_title("Fractal Madness")
-                .with_inner_size(PhysicalSize::new(1280, 1200))
+                .with_inner_size(PhysicalSize::new(1280, 1400))
                 .with_canvas(Some(canvas.clone()))
                 .build(&event_loop)
                 .map_err(|e| format!("Failed to create window: {e}"))?,
@@ -86,7 +86,7 @@ async fn run_inner() -> Result<(), String> {
     let window = Arc::new(
         WindowBuilder::new()
             .with_title("Fractal Madness")
-            .with_inner_size(PhysicalSize::new(1280, 1200))
+            .with_inner_size(PhysicalSize::new(1280, 1400))
             .build(&event_loop)
             .map_err(|e| format!("Failed to create window: {e}"))?,
     );
@@ -302,11 +302,11 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
 
     // Use fixed dimensions for the canvas
     let logical_width = 1280.0;
-    let logical_height = 1200.0;
+    let logical_height = 1400.0;
 
     // Set inline styles to override CSS constraints
     let _ = canvas.style().set_property("width", "1280px");
-    let _ = canvas.style().set_property("height", "1200px");
+    let _ = canvas.style().set_property("height", "1400px");
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
@@ -336,11 +336,11 @@ fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
 
     // Use fixed dimensions for the canvas
     let logical_width = 1280.0;
-    let logical_height = 1200.0;
+    let logical_height = 1400.0;
 
     // Set inline styles to override CSS constraints
     let _ = canvas.style().set_property("width", "1280px");
-    let _ = canvas.style().set_property("height", "1200px");
+    let _ = canvas.style().set_property("height", "1400px");
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
