@@ -15,7 +15,7 @@ struct FractalParams {
     _pad: u32,                   // offset 44 (4 bytes)
     resolution: vec2<f32>,       // offset 48 (8 bytes) - canvas width, height
     ui_offset: f32,              // offset 56 (4 bytes) - horizontal offset for UI panel
-    _pad2: u32,                  // offset 60 (4 bytes) - pad to 64 bytes total
+    ui_offset_y: f32,            // offset 60 (4 bytes) - vertical offset for centering
 }
 
 struct VertexOutput {
@@ -578,10 +578,11 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     // Map to complex plane centered at params.center
     // uv goes 0->1, we want -1 to 1 range, then scale by aspect and zoom
     // ui_offset shifts the visible center to account for the left UI panel
+    // ui_offset_y shifts vertically for proper centering
     let aspect = params.resolution.x / params.resolution.y;
     let ndc = vec2<f32>(
         (uv.x - 0.5) * 2.0 * aspect + params.ui_offset,
-        (uv.y - 0.5) * 2.0
+        (uv.y - 0.5) * 2.0 + params.ui_offset_y
     );
 
     let c = params.center + ndc / params.zoom;

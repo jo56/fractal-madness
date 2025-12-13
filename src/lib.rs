@@ -162,6 +162,8 @@ async fn run_inner() -> Result<(), String> {
                             let aspect = canvas_width / canvas_height;
                             // Shift the visible center to the right to account for the left panel
                             params.ui_offset = -panel_proportion * aspect;
+                            // No vertical offset needed when canvas matches container (no clipping)
+                            params.ui_offset_y = 0.0;
 
                             if let Ok(output) = gpu.surface.get_current_texture() {
                                 let view = output.texture.create_view(&Default::default());
@@ -300,13 +302,21 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
-    // Use fixed dimensions for the canvas
-    let logical_width = 1280.0;
-    let logical_height = 1400.0;
+    // Get container dimensions instead of using hardcoded values
+    let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
+        let w = parent.client_width() as f64;
+        let h = parent.client_height() as f64;
+        // Ensure we have valid dimensions
+        if w > 0.0 && h > 0.0 {
+            (w, h)
+        } else {
+            (1280.0, 800.0) // Fallback
+        }
+    } else {
+        (1280.0, 800.0) // Fallback
+    };
 
-    // Set inline styles to override CSS constraints
-    let _ = canvas.style().set_property("width", "1280px");
-    let _ = canvas.style().set_property("height", "1400px");
+    // Don't set inline styles - let CSS width: 100%; height: 100% handle display size
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
@@ -334,13 +344,21 @@ fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
-    // Use fixed dimensions for the canvas
-    let logical_width = 1280.0;
-    let logical_height = 1400.0;
+    // Get container dimensions instead of using hardcoded values
+    let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
+        let w = parent.client_width() as f64;
+        let h = parent.client_height() as f64;
+        // Ensure we have valid dimensions
+        if w > 0.0 && h > 0.0 {
+            (w, h)
+        } else {
+            (1280.0, 800.0) // Fallback
+        }
+    } else {
+        (1280.0, 800.0) // Fallback
+    };
 
-    // Set inline styles to override CSS constraints
-    let _ = canvas.style().set_property("width", "1280px");
-    let _ = canvas.style().set_property("height", "1400px");
+    // Don't set inline styles - let CSS width: 100%; height: 100% handle display size
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
