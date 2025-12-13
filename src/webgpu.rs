@@ -124,4 +124,30 @@ impl WebGpuState {
         self.config.height = new_height;
         self.surface.configure(&self.device, &self.config);
     }
+
+    /// Try to create an adapter with the specified backend
+    async fn try_create_adapter(
+        window: Arc<Window>,
+        backends: Backends,
+    ) -> Result<(Instance, Surface<'static>, wgpu::Adapter), String> {
+        let instance = Instance::new(InstanceDescriptor {
+            backends,
+            ..Default::default()
+        });
+
+        let surface = instance
+            .create_surface(window)
+            .map_err(|e| format!("Failed to create surface: {e}"))?;
+
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                compatible_surface: Some(&surface),
+                force_fallback_adapter: false,
+            })
+            .await
+            .ok_or_else(|| "Failed to find a suitable GPU adapter".to_string())?;
+
+        Ok((instance, surface, adapter))
+    }
 }
