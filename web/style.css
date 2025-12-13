@@ -1,16 +1,91 @@
-/* Fractal Madness - Editorial Gallery Theme */
+/* Fractal Madness - Theming Engine */
 
 :root {
+  /* Default Theme: Gallery */
   --bg: #fafafa;
   --surface: #ffffff;
   --text: #0a0a0a;
   --text-dim: rgba(0, 0, 0, 0.4);
+  --accent: #0a0a0a;
+  --border: rgba(0, 0, 0, 0.1);
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
   --shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
   --shadow-hover: 0 8px 48px rgba(0, 0, 0, 0.12);
+  --canvas-border-radius: 4px;
+  --canvas-border: none;
+  --overlay-bg: rgba(255, 255, 255, 0.9);
 }
 
+/* Theme: Cyberpunk */
+[data-theme="cyberpunk"] {
+  --bg: #050505;
+  --surface: #000000;
+  --text: #00ff41;
+  --text-dim: #008f11;
+  --accent: #ff00ff;
+  --border: #00ff41;
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Share Tech Mono', monospace;
+  --shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+  --shadow-hover: 0 0 30px rgba(255, 0, 255, 0.4);
+  --canvas-border-radius: 0;
+  --canvas-border: 1px solid #00ff41;
+  --overlay-bg: rgba(0, 0, 0, 0.9);
+}
+
+/* Theme: Retro Terminal */
+[data-theme="retro"] {
+  --bg: #000000;
+  --surface: #111111;
+  --text: #33ff00;
+  --text-dim: rgba(51, 255, 0, 0.5);
+  --accent: #33ff00;
+  --border: #33ff00;
+  --font-display: 'VT323', monospace;
+  --font-body: 'VT323', monospace;
+  --shadow: none;
+  --shadow-hover: none;
+  --canvas-border-radius: 12px;
+  --canvas-border: 2px solid #33ff00;
+  --overlay-bg: rgba(0, 0, 0, 0.95);
+}
+
+/* Theme: Deep Space */
+[data-theme="deep-space"] {
+  --bg: #0b0d17;
+  --surface: #15192b;
+  --text: #e0e7ff;
+  --text-dim: #6b7280;
+  --accent: #64f4ac;
+  --border: rgba(255, 255, 255, 0.1);
+  --font-display: 'Exo 2', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+  --shadow: 0 0 50px rgba(100, 244, 172, 0.05);
+  --shadow-hover: 0 0 80px rgba(100, 244, 172, 0.1);
+  --canvas-border-radius: 8px;
+  --canvas-border: 1px solid rgba(255, 255, 255, 0.1);
+  --overlay-bg: rgba(11, 13, 23, 0.9);
+}
+
+/* Theme: Sketchbook */
+[data-theme="sketchbook"] {
+  --bg: #f5f1e6;
+  --surface: #ffffff;
+  --text: #2b2b2b;
+  --text-dim: #777777;
+  --accent: #e76f51;
+  --border: #2b2b2b;
+  --font-display: 'Patrick Hand', cursive;
+  --font-body: 'Patrick Hand', cursive;
+  --shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+  --shadow-hover: 6px 6px 0 rgba(0, 0, 0, 0.15);
+  --canvas-border-radius: 2px;
+  --canvas-border: 2px solid #2b2b2b;
+  --overlay-bg: rgba(245, 241, 230, 0.95);
+}
+
+/* Base Reset & Layout */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -24,6 +99,7 @@ html, body {
   background: var(--bg);
   font-family: var(--font-body);
   color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .app {
@@ -32,65 +108,134 @@ html, body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 32px;
-  gap: 24px;
-  animation: fadeIn 0.6s ease-out;
+  padding: 24px;
+  gap: 20px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* Header & Controls */
 .header {
-  font-family: var(--font-display);
-  font-size: 1.875rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(92vw, 1400px);
+  padding: 0 8px;
+  z-index: 10;
 }
 
+.header h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-shadow: 0 0 2px transparent; /* Placeholder for glow transition */
+  transition: all 0.3s ease;
+}
+
+[data-theme="cyberpunk"] .header h1,
+[data-theme="retro"] .header h1 {
+  text-transform: uppercase;
+  text-shadow: 0 0 5px var(--text-dim);
+}
+
+.btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+[data-theme="cyberpunk"] .btn,
+[data-theme="retro"] .btn {
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+[data-theme="sketchbook"] .btn {
+  border: 2px solid var(--border);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.current-theme-name {
+  opacity: 0.6;
+  font-size: 0.8em;
+  margin-left: 4px;
+}
+
+/* Canvas Container */
 .canvas-container {
   width: min(92vw, 1400px);
-  height: min(78vh, 900px);
+  height: min(75vh, 850px);
   background: var(--surface);
-  border: none;
-  border-radius: 4px;
+  border: var(--canvas-border);
+  border-radius: var(--canvas-border-radius);
   box-shadow: var(--shadow);
   overflow: hidden;
   display: grid;
   place-items: center;
   position: relative;
-  transition: box-shadow 0.4s ease;
-}
-
-.canvas-container:hover {
-  box-shadow: var(--shadow-hover);
+  transition: all 0.4s ease;
 }
 
 #screen {
   display: block;
   width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
   object-fit: contain;
 }
 
+/* Theme Specific Effects */
+/* CRT Overlay for Retro */
+[data-theme="retro"] .canvas-container::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+/* Footer */
 .footer {
   display: flex;
   align-items: center;
-  gap: 20px;
-  font-size: 0.8125rem;
-  font-weight: 400;
+  justify-content: center;
+  gap: 16px;
+  font-size: 0.85rem;
   color: var(--text-dim);
-  letter-spacing: 0.01em;
+  width: 100%;
+}
+
+.footer a {
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer a:hover {
+  color: var(--accent);
 }
 
 .sep {
@@ -107,27 +252,14 @@ html, body {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 100;
-  background: var(--surface);
+  background: var(--overlay-bg);
   color: var(--text);
-  padding: 32px 40px;
-  border-radius: 4px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--canvas-border-radius);
   text-align: center;
   max-width: 420px;
-  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.15);
-}
-
-#error-banner h2 {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #b91c1c;
-}
-
-#error-banner p {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--text-dim);
+  backdrop-filter: blur(8px);
 }
 
 #error-banner.hidden {
@@ -135,28 +267,18 @@ html, body {
 }
 
 /* Responsive */
-@media (max-width: 640px) {
-  .app {
-    padding: 20px;
-    gap: 16px;
-  }
-
+@media (max-width: 768px) {
   .header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .header h1 {
     font-size: 1.5rem;
   }
 
   .canvas-container {
     width: 100%;
-    height: 72vh;
-    border-radius: 3px;
-  }
-
-  .footer {
-    font-size: 0.75rem;
-    gap: 16px;
-  }
-
-  .sep {
-    height: 10px;
+    height: 65vh;
   }
 }

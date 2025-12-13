@@ -1,16 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="gallery">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fractal Madness</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500&family=Exo+2:wght@400;600&family=Orbitron:wght@400;700&family=Patrick+Hand&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="app">
+      <header class="header">
+        <h1>Fractal Madness</h1>
+        <div class="controls">
+            <button id="theme-toggle" class="btn" aria-label="Switch Theme">
+              <span class="icon">🎨</span>
+              <span class="label">Switch Theme</span>
+              <span class="current-theme-name">Gallery</span>
+            </button>
+        </div>
+      </header>
+
       <main class="canvas-container">
         <canvas id="screen"></canvas>
       </main>
+
+      <footer class="footer">
+        <span>WebAssembly + WebGPU</span>
+        <div class="sep"></div>
+        <span>Rust</span>
+        <div class="sep"></div>
+        <a href="#" id="github-link">Source</a>
+      </footer>
     </div>
 
     <div id="error-banner" class="hidden">
