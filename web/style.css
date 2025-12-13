@@ -256,7 +256,7 @@ html, body {
 
 .canvas-container {
   width: min(92vw, 1400px);
-  height: min(75vh, 850px);
+  height: min(88vh, 1100px);
   background: var(--surface);
   border: var(--canvas-border);
   border-radius: var(--canvas-border-radius);
