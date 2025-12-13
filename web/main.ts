@@ -15,7 +15,7 @@ const THEMES = [
 ];
 
 class ThemeManager {
-  private currentThemeIndex: number = 0;
+  private currentThemeIndex: number = 2; // Default to Retro Terminal (index 2)
   private btn: HTMLButtonElement | null;
   private label: HTMLElement | null;
 
@@ -23,12 +23,8 @@ class ThemeManager {
     this.btn = document.querySelector('#theme-toggle');
     this.label = document.querySelector('.current-theme-name');
     
-    // Load saved theme or default to 0
-    const savedTheme = localStorage.getItem('fractal-theme');
-    if (savedTheme) {
-      const index = THEMES.findIndex(t => t.id === savedTheme);
-      if (index !== -1) this.currentThemeIndex = index;
-    }
+    // Always default to 8-Bit OS (index 7) on load
+    this.currentThemeIndex = 7;
 
     this.applyTheme();
     this.initListeners();
@@ -53,9 +49,6 @@ class ThemeManager {
     if (this.label) {
       this.label.textContent = theme.name;
     }
-
-    // Save persistence
-    localStorage.setItem('fractal-theme', theme.id);
   }
 }
 
