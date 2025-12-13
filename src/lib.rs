@@ -71,7 +71,7 @@ async fn run_inner() -> Result<(), String> {
         let window = Arc::new(
             WindowBuilder::new()
                 .with_title("Fractal Madness")
-                .with_inner_size(PhysicalSize::new(1280, 800))
+                .with_inner_size(PhysicalSize::new(1280, 1000))
                 .with_canvas(Some(canvas.clone()))
                 .build(&event_loop)
                 .map_err(|e| format!("Failed to create window: {e}"))?,
@@ -86,7 +86,7 @@ async fn run_inner() -> Result<(), String> {
     let window = Arc::new(
         WindowBuilder::new()
             .with_title("Fractal Madness")
-            .with_inner_size(PhysicalSize::new(1280, 800))
+            .with_inner_size(PhysicalSize::new(1280, 1000))
             .build(&event_loop)
             .map_err(|e| format!("Failed to create window: {e}"))?,
     );
@@ -300,8 +300,13 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
-    let logical_width = canvas.client_width().max(1) as f64;
-    let logical_height = canvas.client_height().max(1) as f64;
+    // Use fixed dimensions for the canvas
+    let logical_width = 1280.0;
+    let logical_height = 1000.0;
+
+    // Set inline styles to override CSS constraints
+    let _ = canvas.style().set_property("width", "1280px");
+    let _ = canvas.style().set_property("height", "1000px");
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
@@ -309,8 +314,6 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
     canvas.set_width(width);
     canvas.set_height(height);
 
-    // Keep winit's logical window size aligned with the CSS size of the canvas.
-    // Using logical (CSS) pixels here avoids inflating the layout when DPR > 1.
     let logical_size = LogicalSize::new(logical_width, logical_height);
     let _ = window.request_inner_size(logical_size);
 }
@@ -331,8 +334,13 @@ fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
-    let logical_width = canvas.client_width().max(1) as f64;
-    let logical_height = canvas.client_height().max(1) as f64;
+    // Use fixed dimensions for the canvas
+    let logical_width = 1280.0;
+    let logical_height = 1000.0;
+
+    // Set inline styles to override CSS constraints
+    let _ = canvas.style().set_property("width", "1280px");
+    let _ = canvas.style().set_property("height", "1000px");
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
