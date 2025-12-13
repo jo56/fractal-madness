@@ -17,6 +17,7 @@ pub struct UiState {
     state: State,
     renderer: Renderer,
     pending_frame: Option<PreparedFrame>,
+    panel_width: f32,
 }
 
 struct PreparedFrame {
@@ -42,7 +43,12 @@ impl UiState {
             state,
             renderer,
             pending_frame: None,
+            panel_width: 280.0, // default width
         }
+    }
+
+    pub fn get_panel_width(&self) -> f32 {
+        self.panel_width
     }
 
     pub fn handle_window_event(&mut self, window: &Window, event: &WindowEvent) -> bool {
@@ -60,9 +66,11 @@ impl UiState {
 
         let raw_input = self.state.take_egui_input(window);
         let params_before = *params;
+        let mut panel_width = self.panel_width;
         let full_output = self.ctx.run(raw_input, |ctx| {
-            Self::build_ui(ctx, params);
+            panel_width = Self::build_ui(ctx, params);
         });
+        self.panel_width = panel_width;
 
         self.state
             .handle_platform_output(window, full_output.platform_output);
@@ -278,35 +286,38 @@ impl UiState {
         }
     }
 
-    /// Build egui widgets and return true if params changed.
-    fn build_ui(ctx: &Context, params: &mut FractalParams) {
-        egui::SidePanel::left("controls")
+    /// Build egui widgets and return the panel width.
+    fn build_ui(ctx: &Context, params: &mut FractalParams) -> f32 {
+        let response = egui::SidePanel::left("controls")
             .resizable(true)
             .default_width(280.0)
             .show(ctx, |ui| {
-                ui.heading("Fractal Madness");
-                ui.separator();
-
-                Self::fractal_type_section(ui, params);
-                ui.separator();
-
-                Self::parameters_section(ui, params);
-                ui.separator();
-
-                // Show Julia constant for all Julia-type fractals
-                if params.get_fractal_type().needs_julia_c() {
-                    Self::julia_section(ui, params);
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.heading("Fractal Madness");
                     ui.separator();
-                }
 
-                Self::color_section(ui, params);
-                ui.separator();
+                    Self::fractal_type_section(ui, params);
+                    ui.separator();
 
-                Self::navigation_section(ui, params);
-                ui.separator();
+                    Self::parameters_section(ui, params);
+                    ui.separator();
 
-                Self::presets_section(ui, params);
+                    // Show Julia constant for all Julia-type fractals
+                    if params.get_fractal_type().needs_julia_c() {
+                        Self::julia_section(ui, params);
+                        ui.separator();
+                    }
+
+                    Self::color_section(ui, params);
+                    ui.separator();
+
+                    Self::navigation_section(ui, params);
+                    ui.separator();
+
+                    Self::presets_section(ui, params);
+                });
             });
+        response.response.rect.width()
     }
 }
 

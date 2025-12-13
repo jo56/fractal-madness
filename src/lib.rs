@@ -152,6 +152,17 @@ async fn run_inner() -> Result<(), String> {
                                 renderer.mark_dirty();
                             }
 
+                            // Calculate ui_offset to center fractal in visible area (excluding panel)
+                            // Panel width is in logical points, convert to physical pixels
+                            let scale_factor = window.scale_factor() as f32;
+                            let panel_width_physical = ui.get_panel_width() * scale_factor;
+                            let canvas_width = gpu.size.0 as f32;
+                            let canvas_height = gpu.size.1 as f32;
+                            let panel_proportion = panel_width_physical / canvas_width;
+                            let aspect = canvas_width / canvas_height;
+                            // Shift the visible center to the right to account for the left panel
+                            params.ui_offset = -panel_proportion * aspect;
+
                             if let Ok(output) = gpu.surface.get_current_texture() {
                                 let view = output.texture.create_view(&Default::default());
                                 let mut encoder = gpu.device.create_command_encoder(&Default::default());

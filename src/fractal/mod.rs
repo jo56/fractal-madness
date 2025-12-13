@@ -100,7 +100,8 @@ pub struct FractalParams {
     pub flags: u32,              // offset 40 (4 bytes)
     pub _pad: u32,               // offset 44 (4 bytes)
     pub resolution: [f32; 2],    // offset 48 (8 bytes)
-    pub _pad2: [u32; 2],         // offset 56 (8 bytes) - pad to 64 bytes total
+    pub ui_offset: f32,          // offset 56 (4 bytes) - horizontal offset for UI panel
+    pub _pad2: u32,              // offset 60 (4 bytes) - pad to 64 bytes total
 }
 
 impl Default for FractalParams {
@@ -117,7 +118,8 @@ impl Default for FractalParams {
             flags: 1, // smooth coloring on by default
             _pad: 0,
             resolution: [1280.0, 720.0], // default, will be updated each frame
-            _pad2: [0, 0],
+            ui_offset: 0.0,              // will be updated each frame based on UI panel width
+            _pad2: 0,
         }
     }
 }
