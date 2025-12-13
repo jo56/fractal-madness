@@ -71,7 +71,7 @@ async fn run_inner() -> Result<(), String> {
         let window = Arc::new(
             WindowBuilder::new()
                 .with_title("Fractal Madness")
-                .with_inner_size(PhysicalSize::new(1280, 720))
+                .with_inner_size(PhysicalSize::new(1280, 800))
                 .with_canvas(Some(canvas.clone()))
                 .build(&event_loop)
                 .map_err(|e| format!("Failed to create window: {e}"))?,
@@ -86,7 +86,7 @@ async fn run_inner() -> Result<(), String> {
     let window = Arc::new(
         WindowBuilder::new()
             .with_title("Fractal Madness")
-            .with_inner_size(PhysicalSize::new(1280, 720))
+            .with_inner_size(PhysicalSize::new(1280, 800))
             .build(&event_loop)
             .map_err(|e| format!("Failed to create window: {e}"))?,
     );

@@ -117,7 +117,7 @@ impl Default for FractalParams {
             julia_c: [-0.7, 0.27015],
             flags: 1, // smooth coloring on by default
             _pad: 0,
-            resolution: [1280.0, 720.0], // default, will be updated each frame
+            resolution: [1280.0, 800.0], // default, will be updated each frame
             ui_offset: 0.0,              // will be updated each frame based on UI panel width
             _pad2: 0,
         }
