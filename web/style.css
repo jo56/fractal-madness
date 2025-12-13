@@ -1,15 +1,182 @@
-/* Fractal Madness - Editorial Gallery Theme */
+/* Fractal Madness - Theming Engine */
 
 :root {
+  /* Default Theme: Gallery */
   --bg: #fafafa;
   --surface: #ffffff;
   --text: #0a0a0a;
   --text-dim: rgba(0, 0, 0, 0.4);
+  --accent: #0a0a0a;
+  --border: rgba(0, 0, 0, 0.1);
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
   --shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
   --shadow-hover: 0 8px 48px rgba(0, 0, 0, 0.12);
+  --canvas-border-radius: 4px;
+  --canvas-border: none;
+  --overlay-bg: rgba(255, 255, 255, 0.9);
 }
+
+/* Theme: Cyberpunk */
+[data-theme="cyberpunk"] {
+  --bg: #050505;
+  --surface: #000000;
+  --text: #00ff41;
+  --text-dim: #008f11;
+  --accent: #ff00ff;
+  --border: #00ff41;
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Share Tech Mono', monospace;
+  --shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+  --shadow-hover: 0 0 30px rgba(255, 0, 255, 0.4);
+  --canvas-border-radius: 0;
+  --canvas-border: 1px solid #00ff41;
+  --overlay-bg: rgba(0, 0, 0, 0.9);
+}
+
+/* Theme: Retro Terminal */
+[data-theme="retro"] {
+  --bg: #000000;
+  --surface: #111111;
+  --text: #33ff00;
+  --text-dim: rgba(51, 255, 0, 0.5);
+  --accent: #33ff00;
+  --border: #33ff00;
+  --font-display: 'VT323', monospace;
+  --font-body: 'VT323', monospace;
+  --shadow: none;
+  --shadow-hover: none;
+  --canvas-border-radius: 12px;
+  --canvas-border: 2px solid #33ff00;
+  --overlay-bg: rgba(0, 0, 0, 0.95);
+}
+
+/* Theme: Deep Space */
+[data-theme="deep-space"] {
+  --bg: #0b0d17;
+  --surface: #15192b;
+  --text: #e0e7ff;
+  --text-dim: #6b7280;
+  --accent: #64f4ac;
+  --border: rgba(255, 255, 255, 0.1);
+  --font-display: 'Exo 2', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+  --shadow: 0 0 50px rgba(100, 244, 172, 0.05);
+  --shadow-hover: 0 0 80px rgba(100, 244, 172, 0.1);
+  --canvas-border-radius: 8px;
+  --canvas-border: 1px solid rgba(255, 255, 255, 0.1);
+  --overlay-bg: rgba(11, 13, 23, 0.9);
+}
+
+/* Theme: Sketchbook */
+[data-theme="sketchbook"] {
+  --bg: #f5f1e6;
+  --surface: #ffffff;
+  --text: #2b2b2b;
+  --text-dim: #777777;
+  --accent: #e76f51;
+  --border: #2b2b2b;
+  --font-display: 'Patrick Hand', cursive;
+  --font-body: 'Patrick Hand', cursive;
+  --shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+  --shadow-hover: 6px 6px 0 rgba(0, 0, 0, 0.15);
+  --canvas-border-radius: 2px;
+  --canvas-border: 2px solid #2b2b2b;
+  --overlay-bg: rgba(245, 241, 230, 0.95);
+}
+
+/* =========================================
+   NEW RADICAL THEMES
+   ========================================= */
+
+/* Theme: Neo-Brutalism (Sidebar Layout) */
+[data-theme="neo-brutalism"] {
+  --bg: #fff500;
+  --surface: #ffffff;
+  --text: #000000;
+  --text-dim: #000000;
+  --accent: #0055ff;
+  --border: #000000;
+  --font-display: 'Lexend Mega', sans-serif;
+  --font-body: 'Lexend Mega', sans-serif;
+  --shadow: 8px 8px 0 #000000;
+  --shadow-hover: 12px 12px 0 #000000;
+  --canvas-border-radius: 0;
+  --canvas-border: 4px solid #000000;
+  --overlay-bg: #fff500;
+}
+
+/* Theme: Glassmorphism (Floating Dashboard) */
+[data-theme="glass"] {
+  --bg: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --surface: rgba(255, 255, 255, 0.25);
+  --text: #4a4a4a;
+  --text-dim: #7a7a7a;
+  --accent: #ffffff;
+  --border: rgba(255, 255, 255, 0.5);
+  --font-display: 'Quicksand', sans-serif;
+  --font-body: 'Quicksand', sans-serif;
+  --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  --shadow-hover: 0 16px 48px 0 rgba(31, 38, 135, 0.15);
+  --canvas-border-radius: 24px;
+  --canvas-border: 1px solid rgba(255, 255, 255, 0.6);
+  --overlay-bg: rgba(255, 255, 255, 0.6);
+}
+
+/* Theme: 8-Bit OS (Desktop Window) */
+[data-theme="8bit"] {
+  --bg: #008080;
+  --surface: #c0c0c0;
+  --text: #000000;
+  --text-dim: #404040;
+  --accent: #000080;
+  --border: #dfdfdf;
+  --font-display: 'Press Start 2P', cursive;
+  --font-body: 'VT323', monospace;
+  --shadow: 2px 2px 0 #000; /* Simple shadow */
+  --shadow-hover: none;
+  --canvas-border-radius: 0;
+  --canvas-border: inset 2px #fff;
+  --overlay-bg: #c0c0c0;
+}
+
+/* Theme: Vaporwave (Asymmetric) */
+[data-theme="vaporwave"] {
+  --bg: linear-gradient(to bottom, #ff71ce, #01cdfe);
+  --surface: rgba(21, 5, 36, 0.8);
+  --text: #01cdfe;
+  --text-dim: #fffaff;
+  --accent: #ff71ce;
+  --border: #01cdfe;
+  --font-display: 'Monoton', cursive;
+  --font-body: 'Exo 2', sans-serif;
+  --shadow: 5px 5px 0px #ff71ce, -5px -5px 0px #05ffa1;
+  --shadow-hover: 8px 8px 0px #ff71ce, -8px -8px 0px #05ffa1;
+  --canvas-border-radius: 0;
+  --canvas-border: 2px solid #fffaff;
+  --overlay-bg: rgba(21, 5, 36, 0.9);
+}
+
+/* Theme: Industrial (HUD) */
+[data-theme="industrial"] {
+  --bg: #1a1a1a;
+  --surface: rgba(10, 10, 10, 0.85);
+  --text: #ffaa00;
+  --text-dim: #775500;
+  --accent: #ff0000;
+  --border: #ffaa00;
+  --font-display: 'Black Ops One', cursive;
+  --font-body: 'Share Tech Mono', monospace;
+  --shadow: 0 0 15px rgba(255, 170, 0, 0.2);
+  --shadow-hover: 0 0 25px rgba(255, 170, 0, 0.4);
+  --canvas-border-radius: 4px;
+  --canvas-border: 2px solid #ffaa00;
+  --overlay-bg: rgba(10, 10, 10, 0.95);
+}
+
+/* =========================================
+   BASE LAYOUT (Common)
+   ========================================= */
 
 *, *::before, *::after {
   margin: 0;
@@ -24,6 +191,7 @@ html, body {
   background: var(--bg);
   font-family: var(--font-body);
   color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .app {
@@ -32,65 +200,100 @@ html, body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 32px;
-  gap: 24px;
-  animation: fadeIn 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  padding: 24px;
+  gap: 20px;
+  transition: all 0.3s ease;
 }
 
 .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(92vw, 1400px);
+  padding: 0 8px;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.header h1 {
   font-family: var(--font-display);
-  font-size: 1.875rem;
+  font-size: 2rem;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--text);
+  text-shadow: 0 0 2px transparent;
+  transition: all 0.3s ease;
+}
+
+.btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.current-theme-name {
+  opacity: 0.6;
+  font-size: 0.8em;
+  margin-left: 4px;
 }
 
 .canvas-container {
   width: min(92vw, 1400px);
-  height: min(78vh, 900px);
+  height: min(75vh, 850px);
   background: var(--surface);
-  border: none;
-  border-radius: 4px;
+  border: var(--canvas-border);
+  border-radius: var(--canvas-border-radius);
   box-shadow: var(--shadow);
   overflow: hidden;
   display: grid;
   place-items: center;
   position: relative;
-  transition: box-shadow 0.4s ease;
-}
-
-.canvas-container:hover {
-  box-shadow: var(--shadow-hover);
+  transition: all 0.4s ease;
 }
 
 #screen {
   display: block;
   width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
   object-fit: contain;
 }
 
 .footer {
   display: flex;
   align-items: center;
-  gap: 20px;
-  font-size: 0.8125rem;
-  font-weight: 400;
+  justify-content: center;
+  gap: 16px;
+  font-size: 0.85rem;
   color: var(--text-dim);
-  letter-spacing: 0.01em;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.footer a {
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer a:hover {
+  color: var(--accent);
 }
 
 .sep {
@@ -100,6 +303,379 @@ html, body {
   opacity: 0.5;
 }
 
+/* =========================================
+   THEME SPECIFIC OVERRIDES & LAYOUTS
+   ========================================= */
+
+/* Existing Theme Tweaks */
+[data-theme="cyberpunk"] .header h1,
+[data-theme="retro"] .header h1 {
+  text-transform: uppercase;
+  text-shadow: 0 0 5px var(--text-dim);
+}
+[data-theme="cyberpunk"] .btn,
+[data-theme="retro"] .btn {
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+[data-theme="sketchbook"] .btn {
+  border: 2px solid var(--border);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+[data-theme="retro"] .canvas-container::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+/* === 6. NEO-BRUTALISM (Sidebar Layout) === */
+[data-theme="neo-brutalism"] .app {
+  flex-direction: row; /* Horizontal layout */
+  padding: 0;
+  gap: 0;
+  height: 100vh;
+  align-items: stretch;
+}
+
+[data-theme="neo-brutalism"] .header {
+  width: 300px;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  border-right: 4px solid #000;
+  padding: 40px 20px;
+  background: #fff;
+  gap: 40px;
+  flex-shrink: 0;
+}
+
+[data-theme="neo-brutalism"] .header h1 {
+  font-size: 3rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+[data-theme="neo-brutalism"] .canvas-container {
+  width: auto;
+  flex-grow: 1;
+  height: auto;
+  margin: 20px;
+  border: 4px solid #000;
+  box-shadow: 12px 12px 0 #000;
+}
+
+[data-theme="neo-brutalism"] .footer {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 260px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+[data-theme="neo-brutalism"] .btn {
+  width: 100%;
+  border: 3px solid #000;
+  font-weight: 700;
+  text-transform: uppercase;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 0;
+}
+[data-theme="neo-brutalism"] .btn:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0 #000;
+}
+
+/* === 7. GLASSMORPHISM (Floating Dashboard) === */
+[data-theme="glass"] .app {
+  justify-content: center;
+}
+
+[data-theme="glass"] .canvas-container {
+  width: 90vw;
+  height: 80vh;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+[data-theme="glass"] .header {
+  position: absolute;
+  top: 40px;
+  left: 5vw;
+  width: auto;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  padding: 12px 24px;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,0.8);
+}
+
+[data-theme="glass"] .header .controls {
+  display: none; /* Move controls to bottom */
+}
+
+/* Re-inject controls at bottom via pseudo-element hacking or just move them? 
+   Since we can't move DOM, we'll absolutely position the control container */
+[data-theme="glass"] .header .controls {
+  display: block;
+  position: fixed;
+  bottom: 40px;
+  right: 5vw;
+}
+
+[data-theme="glass"] .btn {
+  background: rgba(255,255,255,0.3);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 50px;
+  padding: 12px 24px;
+}
+
+[data-theme="glass"] .footer {
+  position: fixed;
+  bottom: 40px;
+  left: 5vw;
+  width: auto;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 8px 16px;
+  border-radius: 20px;
+}
+
+/* === 8. 8-BIT OS (Desktop Window) === */
+[data-theme="8bit"] .app {
+  justify-content: flex-start;
+  padding: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg width='2' height='2' viewBox='0 0 2 2' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Cpath d='M0 0h1v1H0z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme="8bit"] .header {
+  width: 100%;
+  background: #000080;
+  color: white;
+  padding: 4px 8px;
+  margin-bottom: 20px;
+  /* Make header look like window title bar */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateY(-390px); /* rough positioning above canvas */
+  width: min(92vw, 1400px);
+  z-index: 20;
+  justify-content: center;
+  border: 2px solid #c0c0c0;
+  box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #808080;
+}
+
+[data-theme="8bit"] .header h1 {
+  font-size: 1rem;
+  font-family: 'VT323', monospace;
+}
+
+/* Hide header controls, move to "Taskbar" */
+[data-theme="8bit"] .header .controls {
+  display: none;
+}
+
+[data-theme="8bit"] .canvas-container {
+  border: 4px solid #c0c0c0;
+  border-top-color: #dfdfdf;
+  border-left-color: #dfdfdf;
+  border-right-color: #404040;
+  border-bottom-color: #404040;
+  padding: 4px;
+  background: #c0c0c0;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+}
+
+/* Fake Taskbar */
+[data-theme="8bit"] .footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #c0c0c0;
+  border-top: 2px solid #dfdfdf;
+  padding: 4px;
+  justify-content: flex-start;
+  z-index: 100;
+}
+
+/* Reuse the theme toggle button as the "Start" button */
+[data-theme="8bit"] .header .controls {
+  display: block;
+  position: fixed;
+  bottom: 4px;
+  left: 4px;
+  z-index: 101;
+}
+
+[data-theme="8bit"] .btn {
+  border: 2px solid #fff;
+  border-right-color: #404040;
+  border-bottom-color: #404040;
+  background: #c0c0c0;
+  font-weight: bold;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 4px 12px;
+}
+[data-theme="8bit"] .btn:active {
+  border: 2px solid #404040;
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+}
+
+/* === 9. VAPORWAVE (Asymmetric) === */
+[data-theme="vaporwave"] .app {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  grid-template-rows: 1fr;
+  padding: 0;
+  height: 100vh;
+}
+
+[data-theme="vaporwave"] .header {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 20px 0;
+  background: rgba(0,0,0,0.2);
+}
+
+[data-theme="vaporwave"] .header h1 {
+  font-size: 4rem;
+  letter-spacing: 0.2em;
+  transform: rotate(180deg); /* Fix rotation direction */
+}
+
+[data-theme="vaporwave"] .header .controls {
+  writing-mode: horizontal-tb;
+  margin-top: 20px;
+}
+
+[data-theme="vaporwave"] .canvas-container {
+  grid-column: 1;
+  grid-row: 1;
+  width: 90%;
+  height: 90%;
+  margin: auto;
+  border: 4px double var(--accent);
+  transform: skewX(-2deg);
+}
+
+[data-theme="vaporwave"] .footer {
+  position: fixed;
+  bottom: 10px;
+  left: 20px;
+  width: auto;
+  background: #000;
+  color: #fff;
+  padding: 4px 10px;
+  transform: skewX(-10deg);
+}
+
+/* === 10. INDUSTRIAL (HUD) === */
+[data-theme="industrial"] .app {
+  padding: 0;
+  background: 
+    repeating-linear-gradient(
+      45deg,
+      #1a1a1a,
+      #1a1a1a 10px,
+      #111 10px,
+      #111 20px
+    );
+}
+
+[data-theme="industrial"] .canvas-container {
+  width: 96vw;
+  height: 90vh;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+/* HUD Corners */
+[data-theme="industrial"] .canvas-container::before,
+[data-theme="industrial"] .canvas-container::after {
+  content: "";
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--accent);
+  transition: all 0.3s;
+}
+
+[data-theme="industrial"] .canvas-container::before {
+  top: -2px; left: -2px;
+  border-right: none; border-bottom: none;
+}
+[data-theme="industrial"] .canvas-container::after {
+  bottom: -2px; right: -2px;
+  border-left: none; border-top: none;
+}
+
+[data-theme="industrial"] .header {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  width: auto;
+  padding: 10px 40px;
+  clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+}
+
+[data-theme="industrial"] .header h1 {
+  font-size: 1.5rem;
+  letter-spacing: 2px;
+}
+
+[data-theme="industrial"] .header .controls {
+  position: absolute;
+  top: 120px; /* Below header */
+  right: -45vw; /* Move to right side of screen */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+[data-theme="industrial"] .btn {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Share Tech Mono';
+}
+
+[data-theme="industrial"] .btn:hover {
+  background: var(--accent);
+  color: #000;
+}
+
+[data-theme="industrial"] .footer {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  justify-content: space-between;
+  padding: 0 40px;
+  font-family: 'Share Tech Mono';
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
 /* Error Banner */
 #error-banner {
   position: fixed;
@@ -107,27 +683,14 @@ html, body {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 100;
-  background: var(--surface);
+  background: var(--overlay-bg);
   color: var(--text);
-  padding: 32px 40px;
-  border-radius: 4px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--canvas-border-radius);
   text-align: center;
   max-width: 420px;
-  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.15);
-}
-
-#error-banner h2 {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #b91c1c;
-}
-
-#error-banner p {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--text-dim);
+  backdrop-filter: blur(8px);
 }
 
 #error-banner.hidden {
@@ -135,28 +698,18 @@ html, body {
 }
 
 /* Responsive */
-@media (max-width: 640px) {
-  .app {
-    padding: 20px;
-    gap: 16px;
-  }
-
+@media (max-width: 768px) {
   .header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .header h1 {
     font-size: 1.5rem;
   }
 
   .canvas-container {
     width: 100%;
-    height: 72vh;
-    border-radius: 3px;
-  }
-
-  .footer {
-    font-size: 0.75rem;
-    gap: 16px;
-  }
-
-  .sep {
-    height: 10px;
+    height: 65vh;
   }
 }
