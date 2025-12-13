@@ -14,6 +14,8 @@ pub struct WebGpuState {
     pub size: (u32, u32),
     #[allow(dead_code)]
     pub scale_factor: f64,
+    /// Whether compute shaders are supported (required for deep zoom)
+    pub has_compute_shaders: bool,
 }
 
 impl WebGpuState {
@@ -21,40 +23,54 @@ impl WebGpuState {
         let size = window.inner_size();
         let scale_factor = window.scale_factor();
 
-        // Create wgpu instance - use WebGL for browser compatibility
-        let instance = Instance::new(InstanceDescriptor {
-            #[cfg(target_arch = "wasm32")]
-            backends: Backends::GL,
-            #[cfg(not(target_arch = "wasm32"))]
-            backends: Backends::all(),
-            ..Default::default()
-        });
+        // Try WebGPU first (for compute shaders), fall back to WebGL
+        #[cfg(target_arch = "wasm32")]
+        let (instance, surface, adapter, has_compute_shaders) = {
+            // First try WebGPU
+            let webgpu_result = Self::try_create_adapter(
+                window.clone(),
+                Backends::BROWSER_WEBGPU,
+            ).await;
 
-        // Create surface from window
-        let surface = instance
-            .create_surface(window.clone())
-            .map_err(|e| format!("Failed to create surface: {e}"))?;
+            match webgpu_result {
+                Ok((instance, surface, adapter)) => {
+                    log::info!("Using WebGPU backend");
+                    (instance, surface, adapter, true)
+                }
+                Err(e) => {
+                    log::warn!("WebGPU failed ({}), falling back to WebGL", e);
+                    // Fall back to WebGL
+                    let (instance, surface, adapter) = Self::try_create_adapter(
+                        window.clone(),
+                        Backends::GL,
+                    ).await.map_err(|e| format!("Both WebGPU and WebGL failed: {}", e))?;
+                    log::info!("Using WebGL backend");
+                    (instance, surface, adapter, false)
+                }
+            }
+        };
 
-        // Request adapter
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::HighPerformance,
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-            })
-            .await
-            .ok_or("Failed to find a suitable GPU adapter")?;
+        #[cfg(not(target_arch = "wasm32"))]
+        let (instance, surface, adapter, has_compute_shaders) = {
+            let (instance, surface, adapter) = Self::try_create_adapter(
+                window.clone(),
+                Backends::all(),
+            ).await?;
+            let has_compute = adapter.get_info().backend != wgpu::Backend::Gl;
+            (instance, surface, adapter, has_compute)
+        };
 
-        log::info!("Adapter: {:?}", adapter.get_info());
+        let adapter_info = adapter.get_info();
+        log::info!("Adapter: {:?}", adapter_info);
+        log::info!("Compute shader support: {}", has_compute_shaders);
 
-        // Request device
+        // Request device - always use WebGL2 compatible limits for broad compatibility
         let (device, queue) = adapter
             .request_device(
                 &DeviceDescriptor {
                     label: Some("fractal-device"),
                     required_features: Features::empty(),
-                    required_limits: Limits::downlevel_webgl2_defaults()
-                        .using_resolution(adapter.limits()),
+                    required_limits: Limits::downlevel_webgl2_defaults(),
                 },
                 None,
             )
@@ -96,6 +112,7 @@ impl WebGpuState {
             format,
             size: (width, height),
             scale_factor,
+            has_compute_shaders,
         })
     }
 

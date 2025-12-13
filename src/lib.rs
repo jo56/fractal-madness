@@ -8,12 +8,16 @@ use winit::{
 };
 
 mod color;
+mod deep_renderer;
+mod deep_zoom;
 mod fractal;
 mod input;
 mod renderer;
 mod ui;
 mod webgpu;
 
+use crate::deep_renderer::DeepFractalRenderer;
+use crate::deep_zoom::{DeepZoomParams, RenderMode};
 use crate::fractal::FractalParams;
 use crate::input::InputState;
 use crate::renderer::FractalRenderer;
@@ -93,11 +97,20 @@ async fn run_inner() -> Result<(), String> {
 
     let mut gpu = WebGpuState::new(window.clone()).await?;
     let mut renderer = FractalRenderer::new(&gpu.device, gpu.format, gpu.size.0, gpu.size.1);
+    let mut deep_renderer = if gpu.has_compute_shaders {
+        Some(DeepFractalRenderer::new(&gpu.device, gpu.format, gpu.size.0, gpu.size.1))
+    } else {
+        log::warn!("Compute shaders not supported - deep zoom disabled");
+        None
+    };
     let mut ui = UiState::new(&gpu.device, gpu.format, &window);
+    ui.has_compute_shaders = gpu.has_compute_shaders;
     let mut input = InputState::new();
     let mut params = FractalParams::default();
+    let mut deep_params = DeepZoomParams::default();
 
     log::info!("Initialization complete, starting render loop");
+    log::info!("Compute shader support: {}", gpu.has_compute_shaders);
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -139,6 +152,9 @@ async fn run_inner() -> Result<(), String> {
                         WindowEvent::Resized(new_size) => {
                             gpu.resize(new_size.width, new_size.height);
                             renderer.resize(&gpu.device, new_size.width, new_size.height);
+                            if let Some(dr) = &mut deep_renderer {
+                                dr.resize(&gpu.device, new_size.width, new_size.height);
+                            }
                         }
                         WindowEvent::RedrawRequested => {
                             #[cfg(target_arch = "wasm32")]
@@ -147,9 +163,15 @@ async fn run_inner() -> Result<(), String> {
                             // Update resolution for shader aspect ratio
                             params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
 
-                            let ui_changed = ui.prepare(&window, &mut params);
+                            let ui_changed = ui.prepare_with_deep(&window, &mut params, Some(&mut deep_params));
                             if ui_changed {
                                 renderer.mark_dirty();
+                            }
+
+                            // Sync deep params with standard params when deep zoom is enabled
+                            if deep_params.enabled {
+                                deep_params.color_scheme = params.color_scheme;
+                                deep_params.fractal_type = params.fractal_type;
                             }
 
                             // Calculate ui_offset to center fractal in visible area (excluding panel)
@@ -169,14 +191,31 @@ async fn run_inner() -> Result<(), String> {
                                 let view = output.texture.create_view(&Default::default());
                                 let mut encoder = gpu.device.create_command_encoder(&Default::default());
 
-                                renderer.render(
-                                    &gpu.device,
-                                    &gpu.queue,
-                                    &mut encoder,
-                                    &view,
-                                    &params,
-                                    gpu.size,
-                                );
+                                // Choose renderer based on deep zoom mode
+                                let use_deep = deep_params.enabled
+                                    && deep_params.render_mode == RenderMode::Deep
+                                    && deep_renderer.is_some();
+
+                                if use_deep {
+                                    if let Some(dr) = &mut deep_renderer {
+                                        dr.render(
+                                            &gpu.device,
+                                            &gpu.queue,
+                                            &mut encoder,
+                                            &view,
+                                            &mut deep_params,
+                                        );
+                                    }
+                                } else {
+                                    renderer.render(
+                                        &gpu.device,
+                                        &gpu.queue,
+                                        &mut encoder,
+                                        &view,
+                                        &params,
+                                        gpu.size,
+                                    );
+                                }
 
                                 ui.render(
                                     &gpu.device,
@@ -243,28 +282,54 @@ async fn run_inner() -> Result<(), String> {
                             WindowEvent::Resized(new_size) => {
                                 gpu.resize(new_size.width, new_size.height);
                                 renderer.resize(&gpu.device, new_size.width, new_size.height);
+                                if let Some(dr) = &mut deep_renderer {
+                                    dr.resize(&gpu.device, new_size.width, new_size.height);
+                                }
                             }
                             WindowEvent::RedrawRequested => {
                                 // Update resolution for shader aspect ratio
                                 params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
 
-                                let ui_changed = ui.prepare(&window, &mut params);
+                                let ui_changed = ui.prepare_with_deep(&window, &mut params, Some(&mut deep_params));
                                 if ui_changed {
                                     renderer.mark_dirty();
+                                }
+
+                                // Sync deep params with standard params when deep zoom is enabled
+                                if deep_params.enabled {
+                                    deep_params.color_scheme = params.color_scheme;
+                                    deep_params.fractal_type = params.fractal_type;
                                 }
 
                                 if let Ok(output) = gpu.surface.get_current_texture() {
                                     let view = output.texture.create_view(&Default::default());
                                     let mut encoder = gpu.device.create_command_encoder(&Default::default());
 
-                                    renderer.render(
-                                        &gpu.device,
-                                        &gpu.queue,
-                                        &mut encoder,
-                                        &view,
-                                        &params,
-                                        gpu.size,
-                                    );
+                                    // Choose renderer based on deep zoom mode
+                                    let use_deep = deep_params.enabled
+                                        && deep_params.render_mode == RenderMode::Deep
+                                        && deep_renderer.is_some();
+
+                                    if use_deep {
+                                        if let Some(dr) = &mut deep_renderer {
+                                            dr.render(
+                                                &gpu.device,
+                                                &gpu.queue,
+                                                &mut encoder,
+                                                &view,
+                                                &mut deep_params,
+                                            );
+                                        }
+                                    } else {
+                                        renderer.render(
+                                            &gpu.device,
+                                            &gpu.queue,
+                                            &mut encoder,
+                                            &view,
+                                            &params,
+                                            gpu.size,
+                                        );
+                                    }
 
                                     ui.render(
                                         &gpu.device,
