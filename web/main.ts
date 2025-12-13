@@ -6,7 +6,12 @@ const THEMES = [
   { id: 'cyberpunk', name: 'Cyberpunk' },
   { id: 'retro', name: 'Retro Terminal' },
   { id: 'deep-space', name: 'Deep Space' },
-  { id: 'sketchbook', name: 'Sketchbook' }
+  { id: 'sketchbook', name: 'Sketchbook' },
+  { id: 'neo-brutalism', name: 'Neo-Brutalism' },
+  { id: 'glass', name: 'Glassmorphism' },
+  { id: '8bit', name: '8-Bit OS' },
+  { id: 'vaporwave', name: 'Vaporwave' },
+  { id: 'industrial', name: 'Industrial HUD' }
 ];
 
 class ThemeManager {
