@@ -6,19 +6,19 @@ pub fn presets() -> Vec<LocationPreset> {
         LocationPreset {
             name: "Overview",
             center: [0.0, 0.0],
-            zoom: 0.8,
+            zoom: 0.4,
             fractal_type: FractalType::Heart,
         },
         LocationPreset {
-            name: "Chambers",
-            center: [-0.2, 0.8],
-            zoom: 50.0,
+            name: "Chamber",
+            center: [0.0, 0.5],
+            zoom: 10.0,
             fractal_type: FractalType::Heart,
         },
         LocationPreset {
-            name: "Arteries",
-            center: [-1.5, 0.0],
-            zoom: 100.0,
+            name: "Edge",
+            center: [-0.5, 0.3],
+            zoom: 20.0,
             fractal_type: FractalType::Heart,
         },
     ]
