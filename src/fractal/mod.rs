@@ -81,6 +81,25 @@ impl FractalType {
                 | FractalType::BurningShipJulia
         )
     }
+
+    /// Returns the recommended default color scheme for this fractal type
+    pub fn default_color_scheme(&self) -> u32 {
+        match self {
+            FractalType::Mandelbrot => 0,                  // Classic
+            FractalType::Julia => 0,                       // Classic
+            FractalType::BurningShip => 1,                 // Fire
+            FractalType::BurningShipJulia => 2,            // Ocean
+            FractalType::Tricorn => 5,                     // Electric
+            FractalType::TricornJulia => 12,               // Cosmic
+            FractalType::Buffalo => 3,                     // Rainbow
+            FractalType::BuffaloJulia => 11,               // Plasma
+            FractalType::Celtic => 8,                      // Forest
+            FractalType::CelticJulia => 19,                // Aurora
+            FractalType::PerpendicularMandelbrot => 0,     // Classic
+            FractalType::PerpendicularBurningShip => 9,    // Lava
+            FractalType::Heart => 7,                       // Sunset
+        }
+    }
 }
 
 /// Fractal rendering parameters
@@ -241,10 +260,17 @@ impl FractalParams {
             FractalType::Heart => {
                 self.center = [0.0, 0.0];
             }
-            FractalType::TricornJulia
-            | FractalType::BuffaloJulia
-            | FractalType::CelticJulia
-            | FractalType::BurningShipJulia => {
+            FractalType::TricornJulia => {
+                self.center = [0.0, 0.0];
+                self.power = 4.65;
+            }
+            FractalType::BurningShipJulia => {
+                self.center = [0.0, 0.0];
+                self.max_iter = 10;
+                self.power = 3.5;
+            }
+            FractalType::BuffaloJulia
+            | FractalType::CelticJulia => {
                 self.center = [0.0, 0.0];
             }
         }

@@ -15,6 +15,8 @@ pub fn default_params() -> FractalParams {
 }
 
 /// Interesting location presets for Mandelbrot
+/// Note: Coordinates are limited to 4-5 decimal places to match f32 precision.
+/// Zoom levels are kept moderate (max ~2000) to avoid precision loss artifacts.
 pub fn presets() -> Vec<LocationPreset> {
     vec![
         LocationPreset {
@@ -25,14 +27,14 @@ pub fn presets() -> Vec<LocationPreset> {
         },
         LocationPreset {
             name: "Seahorse Valley",
-            center: [-0.743643887037158, 0.131825904205330],
-            zoom: 500.0,
+            center: [-0.7436, 0.1318],
+            zoom: 300.0,
             fractal_type: FractalType::Mandelbrot,
         },
         LocationPreset {
             name: "Elephant Valley",
-            center: [0.281717921930775, 0.5771052841488505],
-            zoom: 1000.0,
+            center: [0.2817, 0.5771],
+            zoom: 500.0,
             fractal_type: FractalType::Mandelbrot,
         },
         LocationPreset {
@@ -43,26 +45,26 @@ pub fn presets() -> Vec<LocationPreset> {
         },
         LocationPreset {
             name: "Mini Mandelbrot",
-            center: [-1.7497591451303, 0.0],
-            zoom: 10000.0,
+            center: [-1.7498, 0.0],
+            zoom: 2000.0,
             fractal_type: FractalType::Mandelbrot,
         },
         LocationPreset {
             name: "Lightning",
-            center: [-0.170337, -1.06506],
+            center: [-0.1703, -1.0651],
             zoom: 200.0,
             fractal_type: FractalType::Mandelbrot,
         },
         LocationPreset {
             name: "Starfish",
-            center: [-0.374004139, 0.659792175],
-            zoom: 5000.0,
+            center: [-0.374, 0.6598],
+            zoom: 1500.0,
             fractal_type: FractalType::Mandelbrot,
         },
         LocationPreset {
             name: "Sun",
-            center: [-0.776592847, -0.136640848],
-            zoom: 10000.0,
+            center: [-0.7766, -0.1366],
+            zoom: 2000.0,
             fractal_type: FractalType::Mandelbrot,
         },
     ]
