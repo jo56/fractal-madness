@@ -38,8 +38,9 @@ impl UiState {
             window,
             Some(window.scale_factor() as f32),
             None,
+            None, // max_texture_side
         );
-        let renderer = Renderer::new(device, format, None, 1);
+        let renderer = Renderer::new(device, format, None, 1, false);
 
         Self {
             ctx,
@@ -112,7 +113,7 @@ impl UiState {
         ui.label("Fractal Type");
 
         let current = params.get_fractal_type();
-        egui::ComboBox::from_id_source("fractal_type")
+        egui::ComboBox::from_id_salt("fractal_type")
             .selected_text(current.name())
             .show_ui(ui, |ui| {
                 for ft in FractalType::all() {
@@ -178,7 +179,7 @@ impl UiState {
         ui.label("Color Scheme");
 
         let current = ColorScheme::from_u32(params.color_scheme);
-        egui::ComboBox::from_id_source("color_scheme")
+        egui::ComboBox::from_id_salt("color_scheme")
             .selected_text(current.name())
             .show_ui(ui, |ui| {
                 for cs in ColorScheme::all() {
@@ -325,7 +326,7 @@ impl UiState {
             .update_buffers(device, queue, encoder, &prepared.shapes, &prepared.screen_descriptor);
 
         {
-            let mut render_pass = encoder.begin_render_pass(&egui_wgpu::wgpu::RenderPassDescriptor {
+            let render_pass = encoder.begin_render_pass(&egui_wgpu::wgpu::RenderPassDescriptor {
                 label: Some("egui-render-pass"),
                 color_attachments: &[Some(egui_wgpu::wgpu::RenderPassColorAttachment {
                     view: output_view,
@@ -339,6 +340,9 @@ impl UiState {
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
+
+            // Convert to 'static lifetime as required by egui-wgpu 0.30+
+            let mut render_pass = render_pass.forget_lifetime();
 
             self.renderer
                 .render(&mut render_pass, &prepared.shapes, &prepared.screen_descriptor);

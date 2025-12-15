@@ -4,7 +4,7 @@ use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event::{ElementState, Event, MouseScrollDelta, WindowEvent},
     event_loop::EventLoop,
-    window::WindowBuilder,
+    window::Window,
 };
 
 mod color;
@@ -64,7 +64,7 @@ async fn run_inner() -> Result<(), String> {
     #[cfg(target_arch = "wasm32")]
     let window = {
         use wasm_bindgen::JsCast;
-        use winit::platform::web::WindowBuilderExtWebSys;
+        use winit::platform::web::WindowAttributesExtWebSys;
 
         let canvas = web_sys::window()
             .and_then(|win| win.document())
@@ -72,12 +72,15 @@ async fn run_inner() -> Result<(), String> {
             .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
             .ok_or("Failed to find canvas element")?;
 
+        let window_attrs = Window::default_attributes()
+            .with_title("Fractal Madness")
+            .with_inner_size(PhysicalSize::new(1280, 1400))
+            .with_canvas(Some(canvas.clone()));
+
+        #[allow(deprecated)]
         let window = Arc::new(
-            WindowBuilder::new()
-                .with_title("Fractal Madness")
-                .with_inner_size(PhysicalSize::new(1280, 1400))
-                .with_canvas(Some(canvas.clone()))
-                .build(&event_loop)
+            event_loop
+                .create_window(window_attrs)
                 .map_err(|e| format!("Failed to create window: {e}"))?,
         );
 
@@ -87,13 +90,18 @@ async fn run_inner() -> Result<(), String> {
     };
 
     #[cfg(not(target_arch = "wasm32"))]
-    let window = Arc::new(
-        WindowBuilder::new()
+    let window = {
+        let window_attrs = Window::default_attributes()
             .with_title("Fractal Madness")
-            .with_inner_size(PhysicalSize::new(1280, 1400))
-            .build(&event_loop)
-            .map_err(|e| format!("Failed to create window: {e}"))?,
-    );
+            .with_inner_size(PhysicalSize::new(1280, 1400));
+
+        #[allow(deprecated)]
+        Arc::new(
+            event_loop
+                .create_window(window_attrs)
+                .map_err(|e| format!("Failed to create window: {e}"))?,
+        )
+    };
 
     let mut gpu = WebGpuState::new(window.clone()).await?;
     let mut renderer = FractalRenderer::new(&gpu.device, gpu.format, gpu.size.0, gpu.size.1);

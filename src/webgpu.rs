@@ -71,6 +71,7 @@ impl WebGpuState {
                     label: Some("fractal-device"),
                     required_features: Features::empty(),
                     required_limits: Limits::downlevel_webgl2_defaults(),
+                    memory_hints: Default::default(),
                 },
                 None,
             )

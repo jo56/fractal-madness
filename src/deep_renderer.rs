@@ -157,7 +157,9 @@ impl DeepFractalRenderer {
             label: Some("deep-compute-pipeline"),
             layout: Some(&compute_pipeline_layout),
             module: &compute_shader,
-            entry_point: "main",
+            entry_point: Some("main"),
+            compilation_options: Default::default(),
+            cache: None,
         });
 
         // Create display bind group layout
@@ -197,12 +199,14 @@ impl DeepFractalRenderer {
             layout: Some(&display_pipeline_layout),
             vertex: VertexState {
                 module: &display_shader,
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
+                compilation_options: Default::default(),
                 buffers: &[],
             },
             fragment: Some(FragmentState {
                 module: &display_shader,
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
+                compilation_options: Default::default(),
                 targets: &[Some(ColorTargetState {
                     format,
                     blend: Some(BlendState::REPLACE),
@@ -213,6 +217,7 @@ impl DeepFractalRenderer {
             depth_stencil: None,
             multisample: MultisampleState::default(),
             multiview: None,
+            cache: None,
         });
 
         // Create sampler
