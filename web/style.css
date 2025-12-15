@@ -248,6 +248,18 @@ html, body {
   color: var(--accent);
 }
 
+#theme-toggle {
+  cursor: default;
+  pointer-events: none;
+}
+
+#theme-toggle:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-color: var(--border);
+  color: var(--text);
+}
+
 .current-theme-name {
   opacity: 0.6;
   font-size: 0.8em;
@@ -256,7 +268,7 @@ html, body {
 
 .canvas-container {
   width: min(92vw, 1400px);
-  height: min(75vh, 850px);
+  height: min(94vh, 1400px);
   background: var(--surface);
   border: var(--canvas-border);
   border-radius: var(--canvas-border-radius);
@@ -490,7 +502,7 @@ html, body {
   border-left-color: #dfdfdf;
   border-right-color: #404040;
   border-bottom-color: #404040;
-  padding: 4px;
+  padding: 4px 100px 100px 4px;
   background: #c0c0c0;
   box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
 }

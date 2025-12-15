@@ -27,7 +27,7 @@ class ThemeManager {
     this.currentThemeIndex = 7;
 
     this.applyTheme();
-    this.initListeners();
+    // Click listener disabled - title box only
   }
 
   private initListeners() {

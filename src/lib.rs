@@ -4,16 +4,20 @@ use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event::{ElementState, Event, MouseScrollDelta, WindowEvent},
     event_loop::EventLoop,
-    window::WindowBuilder,
+    window::Window,
 };
 
 mod color;
+mod deep_renderer;
+mod deep_zoom;
 mod fractal;
 mod input;
 mod renderer;
 mod ui;
 mod webgpu;
 
+use crate::deep_renderer::DeepFractalRenderer;
+use crate::deep_zoom::{DeepZoomParams, RenderMode};
 use crate::fractal::FractalParams;
 use crate::input::InputState;
 use crate::renderer::FractalRenderer;
@@ -60,7 +64,7 @@ async fn run_inner() -> Result<(), String> {
     #[cfg(target_arch = "wasm32")]
     let window = {
         use wasm_bindgen::JsCast;
-        use winit::platform::web::WindowBuilderExtWebSys;
+        use winit::platform::web::WindowAttributesExtWebSys;
 
         let canvas = web_sys::window()
             .and_then(|win| win.document())
@@ -68,12 +72,15 @@ async fn run_inner() -> Result<(), String> {
             .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
             .ok_or("Failed to find canvas element")?;
 
+        let window_attrs = Window::default_attributes()
+            .with_title("Fractal Madness")
+            .with_inner_size(PhysicalSize::new(1280, 1400))
+            .with_canvas(Some(canvas.clone()));
+
+        #[allow(deprecated)]
         let window = Arc::new(
-            WindowBuilder::new()
-                .with_title("Fractal Madness")
-                .with_inner_size(PhysicalSize::new(1280, 800))
-                .with_canvas(Some(canvas.clone()))
-                .build(&event_loop)
+            event_loop
+                .create_window(window_attrs)
                 .map_err(|e| format!("Failed to create window: {e}"))?,
         );
 
@@ -83,21 +90,35 @@ async fn run_inner() -> Result<(), String> {
     };
 
     #[cfg(not(target_arch = "wasm32"))]
-    let window = Arc::new(
-        WindowBuilder::new()
+    let window = {
+        let window_attrs = Window::default_attributes()
             .with_title("Fractal Madness")
-            .with_inner_size(PhysicalSize::new(1280, 800))
-            .build(&event_loop)
-            .map_err(|e| format!("Failed to create window: {e}"))?,
-    );
+            .with_inner_size(PhysicalSize::new(1280, 1400));
+
+        #[allow(deprecated)]
+        Arc::new(
+            event_loop
+                .create_window(window_attrs)
+                .map_err(|e| format!("Failed to create window: {e}"))?,
+        )
+    };
 
     let mut gpu = WebGpuState::new(window.clone()).await?;
     let mut renderer = FractalRenderer::new(&gpu.device, gpu.format, gpu.size.0, gpu.size.1);
+    let mut deep_renderer = if gpu.has_compute_shaders {
+        Some(DeepFractalRenderer::new(&gpu.device, gpu.format, gpu.size.0, gpu.size.1))
+    } else {
+        log::warn!("Compute shaders not supported - deep zoom disabled");
+        None
+    };
     let mut ui = UiState::new(&gpu.device, gpu.format, &window);
+    ui.has_compute_shaders = gpu.has_compute_shaders;
     let mut input = InputState::new();
     let mut params = FractalParams::default();
+    let mut deep_params = DeepZoomParams::default();
 
     log::info!("Initialization complete, starting render loop");
+    log::info!("Compute shader support: {}", gpu.has_compute_shaders);
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -139,6 +160,9 @@ async fn run_inner() -> Result<(), String> {
                         WindowEvent::Resized(new_size) => {
                             gpu.resize(new_size.width, new_size.height);
                             renderer.resize(&gpu.device, new_size.width, new_size.height);
+                            if let Some(dr) = &mut deep_renderer {
+                                dr.resize(&gpu.device, new_size.width, new_size.height);
+                            }
                         }
                         WindowEvent::RedrawRequested => {
                             #[cfg(target_arch = "wasm32")]
@@ -147,9 +171,15 @@ async fn run_inner() -> Result<(), String> {
                             // Update resolution for shader aspect ratio
                             params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
 
-                            let ui_changed = ui.prepare(&window, &mut params);
+                            let ui_changed = ui.prepare_with_deep(&window, &mut params, Some(&mut deep_params));
                             if ui_changed {
                                 renderer.mark_dirty();
+                            }
+
+                            // Sync deep params with standard params when deep zoom is enabled
+                            if deep_params.enabled {
+                                deep_params.color_scheme = params.color_scheme;
+                                deep_params.fractal_type = params.fractal_type;
                             }
 
                             // Calculate ui_offset to center fractal in visible area (excluding panel)
@@ -162,19 +192,38 @@ async fn run_inner() -> Result<(), String> {
                             let aspect = canvas_width / canvas_height;
                             // Shift the visible center to the right to account for the left panel
                             params.ui_offset = -panel_proportion * aspect;
+                            // No vertical offset needed when canvas matches container (no clipping)
+                            params.ui_offset_y = 0.0;
 
                             if let Ok(output) = gpu.surface.get_current_texture() {
                                 let view = output.texture.create_view(&Default::default());
                                 let mut encoder = gpu.device.create_command_encoder(&Default::default());
 
-                                renderer.render(
-                                    &gpu.device,
-                                    &gpu.queue,
-                                    &mut encoder,
-                                    &view,
-                                    &params,
-                                    gpu.size,
-                                );
+                                // Choose renderer based on deep zoom mode
+                                let use_deep = deep_params.enabled
+                                    && deep_params.render_mode == RenderMode::Deep
+                                    && deep_renderer.is_some();
+
+                                if use_deep {
+                                    if let Some(dr) = &mut deep_renderer {
+                                        dr.render(
+                                            &gpu.device,
+                                            &gpu.queue,
+                                            &mut encoder,
+                                            &view,
+                                            &mut deep_params,
+                                        );
+                                    }
+                                } else {
+                                    renderer.render(
+                                        &gpu.device,
+                                        &gpu.queue,
+                                        &mut encoder,
+                                        &view,
+                                        &params,
+                                        gpu.size,
+                                    );
+                                }
 
                                 ui.render(
                                     &gpu.device,
@@ -241,28 +290,54 @@ async fn run_inner() -> Result<(), String> {
                             WindowEvent::Resized(new_size) => {
                                 gpu.resize(new_size.width, new_size.height);
                                 renderer.resize(&gpu.device, new_size.width, new_size.height);
+                                if let Some(dr) = &mut deep_renderer {
+                                    dr.resize(&gpu.device, new_size.width, new_size.height);
+                                }
                             }
                             WindowEvent::RedrawRequested => {
                                 // Update resolution for shader aspect ratio
                                 params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
 
-                                let ui_changed = ui.prepare(&window, &mut params);
+                                let ui_changed = ui.prepare_with_deep(&window, &mut params, Some(&mut deep_params));
                                 if ui_changed {
                                     renderer.mark_dirty();
+                                }
+
+                                // Sync deep params with standard params when deep zoom is enabled
+                                if deep_params.enabled {
+                                    deep_params.color_scheme = params.color_scheme;
+                                    deep_params.fractal_type = params.fractal_type;
                                 }
 
                                 if let Ok(output) = gpu.surface.get_current_texture() {
                                     let view = output.texture.create_view(&Default::default());
                                     let mut encoder = gpu.device.create_command_encoder(&Default::default());
 
-                                    renderer.render(
-                                        &gpu.device,
-                                        &gpu.queue,
-                                        &mut encoder,
-                                        &view,
-                                        &params,
-                                        gpu.size,
-                                    );
+                                    // Choose renderer based on deep zoom mode
+                                    let use_deep = deep_params.enabled
+                                        && deep_params.render_mode == RenderMode::Deep
+                                        && deep_renderer.is_some();
+
+                                    if use_deep {
+                                        if let Some(dr) = &mut deep_renderer {
+                                            dr.render(
+                                                &gpu.device,
+                                                &gpu.queue,
+                                                &mut encoder,
+                                                &view,
+                                                &mut deep_params,
+                                            );
+                                        }
+                                    } else {
+                                        renderer.render(
+                                            &gpu.device,
+                                            &gpu.queue,
+                                            &mut encoder,
+                                            &view,
+                                            &params,
+                                            gpu.size,
+                                        );
+                                    }
 
                                     ui.render(
                                         &gpu.device,
@@ -300,8 +375,21 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
-    let logical_width = canvas.client_width().max(1) as f64;
-    let logical_height = canvas.client_height().max(1) as f64;
+    // Get container dimensions instead of using hardcoded values
+    let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
+        let w = parent.client_width() as f64;
+        let h = parent.client_height() as f64;
+        // Ensure we have valid dimensions
+        if w > 0.0 && h > 0.0 {
+            (w, h)
+        } else {
+            (1280.0, 800.0) // Fallback
+        }
+    } else {
+        (1280.0, 800.0) // Fallback
+    };
+
+    // Don't set inline styles - let CSS width: 100%; height: 100% handle display size
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
@@ -309,8 +397,6 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
     canvas.set_width(width);
     canvas.set_height(height);
 
-    // Keep winit's logical window size aligned with the CSS size of the canvas.
-    // Using logical (CSS) pixels here avoids inflating the layout when DPR > 1.
     let logical_size = LogicalSize::new(logical_width, logical_height);
     let _ = window.request_inner_size(logical_size);
 }
@@ -331,8 +417,21 @@ fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
-    let logical_width = canvas.client_width().max(1) as f64;
-    let logical_height = canvas.client_height().max(1) as f64;
+    // Get container dimensions instead of using hardcoded values
+    let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
+        let w = parent.client_width() as f64;
+        let h = parent.client_height() as f64;
+        // Ensure we have valid dimensions
+        if w > 0.0 && h > 0.0 {
+            (w, h)
+        } else {
+            (1280.0, 800.0) // Fallback
+        }
+    } else {
+        (1280.0, 800.0) // Fallback
+    };
+
+    // Don't set inline styles - let CSS width: 100%; height: 100% handle display size
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;

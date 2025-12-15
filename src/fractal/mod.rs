@@ -101,14 +101,14 @@ pub struct FractalParams {
     pub _pad: u32,               // offset 44 (4 bytes)
     pub resolution: [f32; 2],    // offset 48 (8 bytes)
     pub ui_offset: f32,          // offset 56 (4 bytes) - horizontal offset for UI panel
-    pub _pad2: u32,              // offset 60 (4 bytes) - pad to 64 bytes total
+    pub ui_offset_y: f32,        // offset 60 (4 bytes) - vertical offset for centering
 }
 
 impl Default for FractalParams {
     fn default() -> Self {
         Self {
             center: [-0.5, 0.0],
-            zoom: 0.8,
+            zoom: 1.0,
             max_iter: 256,
             power: 2.0,
             escape_radius: 4.0,
@@ -117,9 +117,9 @@ impl Default for FractalParams {
             julia_c: [-0.7, 0.27015],
             flags: 1, // smooth coloring on by default
             _pad: 0,
-            resolution: [1280.0, 800.0], // default, will be updated each frame
+            resolution: [1280.0, 1400.0], // default, will be updated each frame
             ui_offset: 0.0,              // will be updated each frame based on UI panel width
-            _pad2: 0,
+            ui_offset_y: 0.0,            // will be updated each frame for vertical centering
         }
     }
 }

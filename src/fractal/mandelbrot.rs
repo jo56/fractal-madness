@@ -5,7 +5,7 @@ use super::{FractalParams, FractalType, LocationPreset};
 pub fn default_params() -> FractalParams {
     FractalParams {
         center: [-0.5, 0.0],
-        zoom: 0.8,
+        zoom: 1.0,
         max_iter: 256,
         power: 2.0,
         escape_radius: 4.0,
@@ -20,7 +20,7 @@ pub fn presets() -> Vec<LocationPreset> {
         LocationPreset {
             name: "Overview",
             center: [-0.5, 0.0],
-            zoom: 0.8,
+            zoom: 1.0,
             fractal_type: FractalType::Mandelbrot,
         },
         LocationPreset {
