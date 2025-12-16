@@ -142,8 +142,17 @@ impl UiState {
         );
         params.max_iter = max_iter as u32;
 
-        // Performance warning for high iteration counts
-        if params.max_iter > 500 {
+        // Fractal-specific performance warning thresholds
+        let warning_threshold = match params.get_fractal_type() {
+            FractalType::Newton => 140,      // 3.5x cost
+            FractalType::Phoenix => 330,     // 1.5x cost
+            FractalType::BuffaloJulia | FractalType::CelticJulia => 400,  // 1.2x cost
+            FractalType::Celtic => 430,      // 1.15x cost
+            FractalType::Tricorn | FractalType::BurningShip => 450,  // 1.1x cost
+            _ => 500,  // Mandelbrot, Julia (baseline)
+        };
+
+        if params.max_iter > warning_threshold {
             ui.colored_label(
                 egui::Color32::from_rgb(255, 180, 0),
                 "High iterations may reduce performance",
