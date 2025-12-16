@@ -74,19 +74,19 @@ pub fn presets() -> Vec<LocationPreset> {
             name: "Overview",
             center: [0.0, 0.0],
             zoom: 0.8,
-            fractal_type: FractalType::Julia, power: None,
+            fractal_type: FractalType::Julia, power: Some(2.0),
         },
         LocationPreset {
             name: "Spiral Detail",
             center: [0.3, 0.3],
             zoom: 5.0,
-            fractal_type: FractalType::Julia, power: None,
+            fractal_type: FractalType::Julia, power: Some(2.0),
         },
         LocationPreset {
             name: "Edge",
             center: [1.0, 0.0],
             zoom: 3.0,
-            fractal_type: FractalType::Julia, power: None,
+            fractal_type: FractalType::Julia, power: Some(2.0),
         },
         // Higher power variants
         LocationPreset {

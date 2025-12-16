@@ -7,19 +7,19 @@ pub fn presets() -> Vec<LocationPreset> {
             name: "Overview",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::Tricorn, power: None,
+            fractal_type: FractalType::Tricorn, power: Some(2.0),
         },
         LocationPreset {
             name: "Antenna",
             center: [-1.1, 0.0],
             zoom: 10.0,
-            fractal_type: FractalType::Tricorn, power: None,
+            fractal_type: FractalType::Tricorn, power: Some(2.0),
         },
         LocationPreset {
             name: "Spiral",
             center: [0.25, 0.5],
             zoom: 20.0,
-            fractal_type: FractalType::Tricorn, power: None,
+            fractal_type: FractalType::Tricorn, power: Some(2.0),
         },
         // Higher power variants
         LocationPreset {

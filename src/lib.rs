@@ -1,11 +1,14 @@
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use winit::{
+    application::ApplicationHandler,
     dpi::{LogicalSize, PhysicalSize},
-    event::{ElementState, Event, MouseScrollDelta, WindowEvent},
-    event_loop::EventLoop,
-    window::Window,
+    event::{ElementState, MouseScrollDelta, WindowEvent},
+    event_loop::{ActiveEventLoop, EventLoop},
+    window::{Window, WindowId},
 };
+#[cfg(not(target_arch = "wasm32"))]
+use winit::event::Event;
 
 mod color;
 mod fractal;
@@ -19,6 +22,121 @@ use crate::input::InputState;
 use crate::renderer::FractalRenderer;
 use crate::ui::UiState;
 use crate::webgpu::WebGpuState;
+
+#[cfg(target_arch = "wasm32")]
+struct App {
+    window: Arc<Window>,
+    gpu: WebGpuState,
+    renderer: FractalRenderer,
+    ui: UiState,
+    input: InputState,
+    params: FractalParams,
+}
+
+#[cfg(target_arch = "wasm32")]
+impl ApplicationHandler for App {
+    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
+        // Window already created, nothing to do
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        let consumed = self.ui.handle_window_event(&self.window, &event);
+
+        if !consumed {
+            match &event {
+                WindowEvent::MouseInput { state: btn_state, button, .. } => {
+                    self.input.handle_mouse_button(*button, *btn_state == ElementState::Pressed);
+                }
+                WindowEvent::CursorMoved { position, .. } => {
+                    if let Some(delta) = self.input.handle_cursor_move(position.x as f32, position.y as f32) {
+                        let (width, height) = self.gpu.size;
+                        self.params.pan(delta.0, delta.1, width as f32, height as f32);
+                        self.renderer.mark_dirty();
+                    }
+                }
+                WindowEvent::MouseWheel { delta, .. } => {
+                    let scroll = match delta {
+                        MouseScrollDelta::LineDelta(_, y) => *y,
+                        MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
+                    };
+                    self.params.zoom_by(scroll * 0.1);
+                    self.renderer.mark_dirty();
+                }
+                _ => {}
+            }
+        }
+
+        match event {
+            WindowEvent::CloseRequested => {
+                event_loop.exit();
+            }
+            WindowEvent::Resized(new_size) => {
+                self.gpu.resize(new_size.width, new_size.height);
+                self.renderer.resize(&self.gpu.device, new_size.width, new_size.height);
+            }
+            WindowEvent::RedrawRequested => {
+                sync_canvas_size(&self.window, &mut self.gpu);
+
+                // Update resolution for shader aspect ratio
+                self.params.resolution = [self.gpu.size.0 as f32, self.gpu.size.1 as f32];
+
+                let ui_changed = self.ui.prepare(&self.window, &mut self.params);
+                if ui_changed {
+                    self.renderer.mark_dirty();
+                }
+
+                // Calculate ui_offset to center fractal in visible area (excluding panel)
+                let scale_factor = self.window.scale_factor() as f32;
+                let panel_width_physical = self.ui.get_panel_width() * scale_factor;
+                let canvas_width = self.gpu.size.0 as f32;
+                let canvas_height = self.gpu.size.1 as f32;
+                let panel_proportion = panel_width_physical / canvas_width;
+                let aspect = canvas_width / canvas_height;
+                self.params.ui_offset = -panel_proportion * aspect;
+                self.params.ui_offset_y = 0.0;
+
+                if let Ok(output) = self.gpu.surface.get_current_texture() {
+                    let view = output.texture.create_view(&Default::default());
+                    let mut encoder = self.gpu.device.create_command_encoder(&Default::default());
+
+                    self.renderer.render(
+                        &self.gpu.device,
+                        &self.gpu.queue,
+                        &mut encoder,
+                        &view,
+                        &self.params,
+                        self.gpu.size,
+                    );
+
+                    self.ui.render(
+                        &self.gpu.device,
+                        &self.gpu.queue,
+                        &mut encoder,
+                        &view,
+                        &self.window,
+                        self.gpu.format,
+                    );
+
+                    self.gpu.queue.submit(std::iter::once(encoder.finish()));
+                    output.present();
+                }
+
+                self.window.request_redraw();
+            }
+            _ => {}
+        }
+    }
+
+    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        sync_canvas_size(&self.window, &mut self.gpu);
+        self.window.request_redraw();
+    }
+}
 
 #[wasm_bindgen(start)]
 pub fn start() {
@@ -99,10 +217,15 @@ async fn run_inner() -> Result<(), String> {
         )
     };
 
+    #[allow(unused_mut)] // mut needed for non-WASM targets
     let mut gpu = WebGpuState::new(window.clone()).await?;
+    #[allow(unused_mut)]
     let mut renderer = FractalRenderer::new(&gpu.device, gpu.format, gpu.size.0, gpu.size.1);
+    #[allow(unused_mut)]
     let mut ui = UiState::new(&gpu.device, gpu.format, &window);
+    #[allow(unused_mut)]
     let mut input = InputState::new();
+    #[allow(unused_mut)]
     let mut params = FractalParams::default();
 
     log::info!("Initialization complete, starting render loop");
@@ -111,104 +234,15 @@ async fn run_inner() -> Result<(), String> {
     {
         use winit::platform::web::EventLoopExtWebSys;
 
-        event_loop.spawn(move |event, target| {
-            match event {
-                Event::WindowEvent { event, .. } => {
-                    let consumed = ui.handle_window_event(&window, &event);
-
-                    if !consumed {
-                        match &event {
-                            WindowEvent::MouseInput { state: btn_state, button, .. } => {
-                                input.handle_mouse_button(*button, *btn_state == ElementState::Pressed);
-                            }
-                            WindowEvent::CursorMoved { position, .. } => {
-                                if let Some(delta) = input.handle_cursor_move(position.x as f32, position.y as f32) {
-                                    let (width, height) = gpu.size;
-                                    params.pan(delta.0, delta.1, width as f32, height as f32);
-                                    renderer.mark_dirty();
-                                }
-                            }
-                            WindowEvent::MouseWheel { delta, .. } => {
-                                let scroll = match delta {
-                                    MouseScrollDelta::LineDelta(_, y) => *y,
-                                    MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
-                                };
-                                params.zoom_by(scroll * 0.1);
-                                renderer.mark_dirty();
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    match event {
-                        WindowEvent::CloseRequested => {
-                            target.exit();
-                        }
-                        WindowEvent::Resized(new_size) => {
-                            gpu.resize(new_size.width, new_size.height);
-                            renderer.resize(&gpu.device, new_size.width, new_size.height);
-                        }
-                        WindowEvent::RedrawRequested => {
-                            #[cfg(target_arch = "wasm32")]
-                            sync_canvas_size(&window, &mut gpu);
-
-                            // Update resolution for shader aspect ratio
-                            params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
-
-                            let ui_changed = ui.prepare(&window, &mut params);
-                            if ui_changed {
-                                renderer.mark_dirty();
-                            }
-
-                            // Calculate ui_offset to center fractal in visible area (excluding panel)
-                            let scale_factor = window.scale_factor() as f32;
-                            let panel_width_physical = ui.get_panel_width() * scale_factor;
-                            let canvas_width = gpu.size.0 as f32;
-                            let canvas_height = gpu.size.1 as f32;
-                            let panel_proportion = panel_width_physical / canvas_width;
-                            let aspect = canvas_width / canvas_height;
-                            params.ui_offset = -panel_proportion * aspect;
-                            params.ui_offset_y = 0.0;
-
-                            if let Ok(output) = gpu.surface.get_current_texture() {
-                                let view = output.texture.create_view(&Default::default());
-                                let mut encoder = gpu.device.create_command_encoder(&Default::default());
-
-                                renderer.render(
-                                    &gpu.device,
-                                    &gpu.queue,
-                                    &mut encoder,
-                                    &view,
-                                    &params,
-                                    gpu.size,
-                                );
-
-                                ui.render(
-                                    &gpu.device,
-                                    &gpu.queue,
-                                    &mut encoder,
-                                    &view,
-                                    &window,
-                                    gpu.format,
-                                );
-
-                                gpu.queue.submit(std::iter::once(encoder.finish()));
-                                output.present();
-                            }
-
-                            window.request_redraw();
-                        }
-                        _ => {}
-                    }
-                }
-                Event::AboutToWait => {
-                    #[cfg(target_arch = "wasm32")]
-                    sync_canvas_size(&window, &mut gpu);
-                    window.request_redraw();
-                }
-                _ => {}
-            }
-        });
+        let app = App {
+            window,
+            gpu,
+            renderer,
+            ui,
+            input,
+            params,
+        };
+        event_loop.spawn_app(app);
     }
 
     #[cfg(not(target_arch = "wasm32"))]

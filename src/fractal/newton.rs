@@ -25,31 +25,31 @@ pub fn presets() -> Vec<LocationPreset> {
             name: "Overview",
             center: [0.0, 0.0],
             zoom: 1.5,
-            fractal_type: FractalType::Newton, power: None,
+            fractal_type: FractalType::Newton, power: Some(3.0),
         },
         LocationPreset {
             name: "Triple Junction",
             center: [0.0, 0.0],
             zoom: 4.0,
-            fractal_type: FractalType::Newton, power: None,
+            fractal_type: FractalType::Newton, power: Some(3.0),
         },
         LocationPreset {
             name: "Basin Boundary",
             center: [0.25, 0.43],
             zoom: 8.0,
-            fractal_type: FractalType::Newton, power: None,
+            fractal_type: FractalType::Newton, power: Some(3.0),
         },
         LocationPreset {
             name: "Spiral Detail",
             center: [0.15, 0.26],
             zoom: 25.0,
-            fractal_type: FractalType::Newton, power: None,
+            fractal_type: FractalType::Newton, power: Some(3.0),
         },
         LocationPreset {
             name: "Fractal Vein",
             center: [0.1, 0.17],
             zoom: 60.0,
-            fractal_type: FractalType::Newton, power: None,
+            fractal_type: FractalType::Newton, power: Some(3.0),
         },
     ]
 }

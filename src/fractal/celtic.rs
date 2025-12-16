@@ -7,13 +7,13 @@ pub fn presets() -> Vec<LocationPreset> {
             name: "Overview",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::Celtic, power: None,
+            fractal_type: FractalType::Celtic, power: Some(2.0),
         },
         LocationPreset {
             name: "Knot",
             center: [-0.75, 0.0],
             zoom: 10.0,
-            fractal_type: FractalType::Celtic, power: None,
+            fractal_type: FractalType::Celtic, power: Some(2.0),
         },
         // Higher power variants
         LocationPreset {
@@ -44,13 +44,13 @@ pub fn julia_presets() -> Vec<LocationPreset> {
             name: "Overview",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::CelticJulia, power: None,
+            fractal_type: FractalType::CelticJulia, power: Some(2.0),
         },
         LocationPreset {
             name: "Detail",
             center: [0.3, 0.3],
             zoom: 5.0,
-            fractal_type: FractalType::CelticJulia, power: None,
+            fractal_type: FractalType::CelticJulia, power: Some(2.0),
         },
     ]
 }
