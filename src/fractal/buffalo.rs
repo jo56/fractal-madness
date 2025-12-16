@@ -7,13 +7,13 @@ pub fn julia_presets() -> Vec<LocationPreset> {
             name: "Overview",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::BuffaloJulia,
+            fractal_type: FractalType::BuffaloJulia, power: None,
         },
         LocationPreset {
             name: "Detail",
             center: [0.25, 0.25],
             zoom: 5.0,
-            fractal_type: FractalType::BuffaloJulia,
+            fractal_type: FractalType::BuffaloJulia, power: None,
         },
     ]
 }

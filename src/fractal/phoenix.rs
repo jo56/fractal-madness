@@ -24,25 +24,25 @@ pub fn presets() -> Vec<LocationPreset> {
             name: "Overview",
             center: [0.0, 0.0],
             zoom: 0.8,
-            fractal_type: FractalType::Phoenix,
+            fractal_type: FractalType::Phoenix, power: None,
         },
         LocationPreset {
             name: "Wing Edge",
             center: [0.5, 0.5],
             zoom: 3.0,
-            fractal_type: FractalType::Phoenix,
+            fractal_type: FractalType::Phoenix, power: None,
         },
         LocationPreset {
             name: "Tail",
             center: [0.0, -0.9],
             zoom: 4.0,
-            fractal_type: FractalType::Phoenix,
+            fractal_type: FractalType::Phoenix, power: None,
         },
         LocationPreset {
             name: "Inner Curl",
             center: [-0.15, 0.2],
             zoom: 10.0,
-            fractal_type: FractalType::Phoenix,
+            fractal_type: FractalType::Phoenix, power: None,
         },
     ]
 }

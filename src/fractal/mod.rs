@@ -250,6 +250,7 @@ pub struct LocationPreset {
     pub center: [f32; 2],
     pub zoom: f32,
     pub fractal_type: FractalType,
+    pub power: Option<f32>,
 }
 
 impl LocationPreset {
@@ -257,5 +258,8 @@ impl LocationPreset {
         params.center = self.center;
         params.zoom = self.zoom;
         params.set_fractal_type(self.fractal_type);
+        if let Some(p) = self.power {
+            params.power = p;
+        }
     }
 }
