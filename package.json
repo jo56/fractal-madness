@@ -4,7 +4,7 @@
   "description": "WebGPU-accelerated fractal visualizer",
   "type": "module",
   "scripts": {
-    "wasm:dev": "wasm-pack build --dev --target web --out-dir pkg",
+    "wasm:dev": "wasm-pack build --release --target web --out-dir pkg",
     "wasm:release": "wasm-pack build --release --target web --out-dir pkg",
     "dev": "npm run wasm:dev && vite dev",
     "build": "npm run wasm:release && vite build",

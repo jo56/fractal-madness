@@ -51,5 +51,24 @@ pub fn presets() -> Vec<LocationPreset> {
             zoom: 60.0,
             fractal_type: FractalType::Newton, power: Some(3.0),
         },
+        // Different power variants (changes number of root basins)
+        LocationPreset {
+            name: "Quadratic (z²)",
+            center: [0.0, 0.0],
+            zoom: 1.5,
+            fractal_type: FractalType::Newton, power: Some(2.0),
+        },
+        LocationPreset {
+            name: "Quartic (z⁴)",
+            center: [0.0, 0.0],
+            zoom: 1.5,
+            fractal_type: FractalType::Newton, power: Some(4.0),
+        },
+        LocationPreset {
+            name: "Quintic (z⁵)",
+            center: [0.0, 0.0],
+            zoom: 1.5,
+            fractal_type: FractalType::Newton, power: Some(5.0),
+        },
     ]
 }

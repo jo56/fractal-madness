@@ -234,6 +234,7 @@ impl FractalParams {
             FractalType::Newton => {
                 self.center = [0.0, 0.0];
                 self.zoom = 0.8;
+                self.max_iter = 15;  // Newton is expensive, start low
             }
             FractalType::Phoenix => {
                 self.center = [0.0, 0.0];

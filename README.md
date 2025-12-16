@@ -4,12 +4,16 @@ A GPU-accelerated fractal visualizer built with Rust and WebGPU, compiled to Web
 
 ## Features
 
-- **3 Fractal Types**: Mandelbrot, Julia, and Burning Ship
+- **9 Fractal Types**:
+  - *Classic Escape-Time*: Mandelbrot, Tricorn, Celtic, Burning Ship
+  - *Julia Variants*: Julia, Buffalo Julia, Celtic Julia
+  - *Advanced*: Newton (root-finding), Phoenix (memory-based)
 - **26 Color Schemes**: Classic, Fire, Ocean, Rainbow, Neon, Plasma, and more
 - **Interactive Controls**: Pan with mouse drag, zoom with scroll wheel
 - **Real-time Parameters**: Adjust iterations, power, escape radius
 - **Julia Set Explorer**: Adjust the complex constant c in real-time
-- **Location Presets**: Jump to interesting locations in each fractal
+- **58+ Location Presets**: Curated locations across all fractal types
+- **Performance Warnings**: Dynamic warnings for computationally expensive settings
 
 ## Tech Stack
 
@@ -58,6 +62,14 @@ fractal-madness/
 │   ├── input.rs            # Mouse input handling
 │   ├── color.rs            # Color scheme definitions
 │   └── fractal/            # Fractal implementations
+│       ├── mandelbrot.rs
+│       ├── julia.rs
+│       ├── burning_ship.rs
+│       ├── tricorn.rs
+│       ├── celtic.rs
+│       ├── buffalo.rs
+│       ├── newton.rs
+│       └── phoenix.rs
 ├── shaders/
 │   └── fractal.wgsl        # WGSL fragment shader
 ├── web/                    # Frontend
@@ -82,6 +94,12 @@ Uses WebGL2 backend for broad compatibility. Tested on:
 | Pan | Click and drag |
 | Zoom | Mouse wheel |
 | Reset | "Reset View" button |
+
+## Performance Notes
+
+- **Newton fractals** are computationally expensive (~3.5x cost vs standard fractals)
+- **Phoenix fractals** have moderate overhead (~1.5x cost)
+- The UI displays warnings when iteration counts exceed recommended thresholds
 
 ## License
 
