@@ -62,7 +62,7 @@ html, body {
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(90vw, 1360px);
+  width: min(92vw, 1400px);
   z-index: 20;
   border: 2px solid #c0c0c0;
   box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #808080;
@@ -88,9 +88,9 @@ html, body {
    ========================================= */
 
 .canvas-container {
-  width: min(90vw, 1360px);
-  height: calc(100vh - 110px);
-  max-height: 1200px;
+  width: min(92vw, 1400px);
+  height: calc(100vh - 90px);
+  max-height: 1240px;
   margin-top: 30px;
   background: #c0c0c0;
   border: 4px solid #c0c0c0;

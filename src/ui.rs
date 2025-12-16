@@ -345,6 +345,7 @@ impl UiState {
         let response = egui::SidePanel::left("controls")
             .resizable(true)
             .default_width(280.0)
+            .frame(egui::Frame::side_top_panel(&ctx.style()).inner_margin(8.0))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
 
