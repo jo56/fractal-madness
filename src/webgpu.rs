@@ -14,8 +14,6 @@ pub struct WebGpuState {
     pub size: (u32, u32),
     #[allow(dead_code)]
     pub scale_factor: f64,
-    /// Whether compute shaders are supported (required for deep zoom)
-    pub has_compute_shaders: bool,
 }
 
 impl WebGpuState {
@@ -23,9 +21,9 @@ impl WebGpuState {
         let size = window.inner_size();
         let scale_factor = window.scale_factor();
 
-        // Try WebGPU first (for compute shaders), fall back to WebGL
+        // Try WebGPU first, fall back to WebGL
         #[cfg(target_arch = "wasm32")]
-        let (instance, surface, adapter, has_compute_shaders) = {
+        let (_instance, surface, adapter) = {
             // First try WebGPU
             let webgpu_result = Self::try_create_adapter(
                 window.clone(),
@@ -35,7 +33,7 @@ impl WebGpuState {
             match webgpu_result {
                 Ok((instance, surface, adapter)) => {
                     log::info!("Using WebGPU backend");
-                    (instance, surface, adapter, true)
+                    (instance, surface, adapter)
                 }
                 Err(e) => {
                     log::warn!("WebGPU failed ({}), falling back to WebGL", e);
@@ -45,24 +43,21 @@ impl WebGpuState {
                         Backends::GL,
                     ).await.map_err(|e| format!("Both WebGPU and WebGL failed: {}", e))?;
                     log::info!("Using WebGL backend");
-                    (instance, surface, adapter, false)
+                    (instance, surface, adapter)
                 }
             }
         };
 
         #[cfg(not(target_arch = "wasm32"))]
-        let (instance, surface, adapter, has_compute_shaders) = {
-            let (instance, surface, adapter) = Self::try_create_adapter(
+        let (_instance, surface, adapter) = {
+            Self::try_create_adapter(
                 window.clone(),
                 Backends::all(),
-            ).await?;
-            let has_compute = adapter.get_info().backend != wgpu::Backend::Gl;
-            (instance, surface, adapter, has_compute)
+            ).await?
         };
 
         let adapter_info = adapter.get_info();
         log::info!("Adapter: {:?}", adapter_info);
-        log::info!("Compute shader support: {}", has_compute_shaders);
 
         // Request device - always use WebGL2 compatible limits for broad compatibility
         let (device, queue) = adapter
@@ -113,7 +108,6 @@ impl WebGpuState {
             format,
             size: (width, height),
             scale_factor,
-            has_compute_shaders,
         })
     }
 
