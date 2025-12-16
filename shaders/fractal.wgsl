@@ -32,16 +32,11 @@ const FRACTAL_MANDELBROT: u32 = 0u;
 const FRACTAL_JULIA: u32 = 1u;
 const FRACTAL_BURNING_SHIP: u32 = 2u;
 const FRACTAL_TRICORN: u32 = 3u;
-const FRACTAL_BUFFALO: u32 = 4u;
-const FRACTAL_CELTIC: u32 = 5u;
-const FRACTAL_PERPENDICULAR_MANDELBROT: u32 = 6u;
-const FRACTAL_PERPENDICULAR_BURNING_SHIP: u32 = 7u;
-const FRACTAL_HEART: u32 = 8u;
+const FRACTAL_CELTIC: u32 = 4u;
+const FRACTAL_HEART: u32 = 5u;
 // Julia variants
-const FRACTAL_TRICORN_JULIA: u32 = 9u;
-const FRACTAL_BUFFALO_JULIA: u32 = 10u;
-const FRACTAL_CELTIC_JULIA: u32 = 11u;
-const FRACTAL_BURNING_SHIP_JULIA: u32 = 12u;
+const FRACTAL_BUFFALO_JULIA: u32 = 6u;
+const FRACTAL_CELTIC_JULIA: u32 = 7u;
 
 // Flag bit masks
 const FLAG_SMOOTH: u32 = 1u;
@@ -159,45 +154,7 @@ fn iterate_tricorn(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) 
     return vec2<f32>(f32(i), dot(z, z));
 }
 
-// Tricorn Julia: z = conj(z)^2 + c (starting from z_init)
-fn iterate_tricorn_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
-    var z = z_init;
-    var i: u32 = 0u;
-    let escape2 = escape_radius * escape_radius;
-
-    while (i < max_iter && dot(z, z) < escape2) {
-        z = vec2<f32>(z.x, -z.y); // conjugate
-        if (power == 2.0) {
-            z = cmul(z, z) + c;
-        } else {
-            z = cpow(z, power) + c;
-        }
-        i = i + 1u;
-    }
-
-    return vec2<f32>(f32(i), dot(z, z));
-}
-
-// Buffalo: z = abs(z)^2 - z + c
-fn iterate_buffalo(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
-    var z = vec2<f32>(0.0, 0.0);
-    var i: u32 = 0u;
-    let escape2 = escape_radius * escape_radius;
-
-    while (i < max_iter && dot(z, z) < escape2) {
-        let az = vec2<f32>(abs(z.x), abs(z.y));
-        if (power == 2.0) {
-            z = cmul(az, az) - z + c;
-        } else {
-            z = cpow(az, power) - z + c;
-        }
-        i = i + 1u;
-    }
-
-    return vec2<f32>(f32(i), dot(z, z));
-}
-
-// Buffalo Julia
+// Buffalo Julia: z = abs(z)^2 - z + c (starting from z_init)
 fn iterate_buffalo_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
     var z = z_init;
     var i: u32 = 0u;
@@ -256,44 +213,6 @@ fn iterate_celtic_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u
     return vec2<f32>(f32(i), dot(z, z));
 }
 
-// Perpendicular Mandelbrot: z = (abs(z.x), z.y)^2 + c
-fn iterate_perpendicular_mandelbrot(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
-    var z = vec2<f32>(0.0, 0.0);
-    var i: u32 = 0u;
-    let escape2 = escape_radius * escape_radius;
-
-    while (i < max_iter && dot(z, z) < escape2) {
-        z = vec2<f32>(abs(z.x), z.y);
-        if (power == 2.0) {
-            z = cmul(z, z) + c;
-        } else {
-            z = cpow(z, power) + c;
-        }
-        i = i + 1u;
-    }
-
-    return vec2<f32>(f32(i), dot(z, z));
-}
-
-// Perpendicular Burning Ship: z = (z.x, abs(z.y))^2 + c
-fn iterate_perpendicular_burning_ship(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
-    var z = vec2<f32>(0.0, 0.0);
-    var i: u32 = 0u;
-    let escape2 = escape_radius * escape_radius;
-
-    while (i < max_iter && dot(z, z) < escape2) {
-        z = vec2<f32>(z.x, abs(z.y));
-        if (power == 2.0) {
-            z = cmul(z, z) + c;
-        } else {
-            z = cpow(z, power) + c;
-        }
-        i = i + 1u;
-    }
-
-    return vec2<f32>(f32(i), dot(z, z));
-}
-
 // Heart: z = (z.x * abs(z.x), z.y^2) + c - creates heart-like shapes
 fn iterate_heart(c: vec2<f32>, max_iter: u32, escape_radius: f32) -> vec2<f32> {
     var z = vec2<f32>(0.0, 0.0);
@@ -304,25 +223,6 @@ fn iterate_heart(c: vec2<f32>, max_iter: u32, escape_radius: f32) -> vec2<f32> {
         let new_x = z.x * z.x - z.y * z.y + c.x;
         let new_y = 2.0 * abs(z.x) * z.y + c.y;
         z = vec2<f32>(new_x, new_y);
-        i = i + 1u;
-    }
-
-    return vec2<f32>(f32(i), dot(z, z));
-}
-
-// Burning Ship Julia
-fn iterate_burning_ship_julia(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
-    var z = z_init;
-    var i: u32 = 0u;
-    let escape2 = escape_radius * escape_radius;
-
-    while (i < max_iter && dot(z, z) < escape2) {
-        z = vec2<f32>(abs(z.x), abs(z.y));
-        if (power == 2.0) {
-            z = cmul(z, z) + c;
-        } else {
-            z = cpow(z, power) + c;
-        }
         i = i + 1u;
     }
 
@@ -639,32 +539,17 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
         case FRACTAL_TRICORN: {
             result = iterate_tricorn(c, params.power, params.max_iter, params.escape_radius);
         }
-        case FRACTAL_BUFFALO: {
-            result = iterate_buffalo(c, params.power, params.max_iter, params.escape_radius);
-        }
         case FRACTAL_CELTIC: {
             result = iterate_celtic(c, params.power, params.max_iter, params.escape_radius);
         }
-        case FRACTAL_PERPENDICULAR_MANDELBROT: {
-            result = iterate_perpendicular_mandelbrot(c, params.power, params.max_iter, params.escape_radius);
-        }
-        case FRACTAL_PERPENDICULAR_BURNING_SHIP: {
-            result = iterate_perpendicular_burning_ship(c, params.power, params.max_iter, params.escape_radius);
-        }
         case FRACTAL_HEART: {
             result = iterate_heart(c, params.max_iter, params.escape_radius);
-        }
-        case FRACTAL_TRICORN_JULIA: {
-            result = iterate_tricorn_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
         }
         case FRACTAL_BUFFALO_JULIA: {
             result = iterate_buffalo_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
         }
         case FRACTAL_CELTIC_JULIA: {
             result = iterate_celtic_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
-        }
-        case FRACTAL_BURNING_SHIP_JULIA: {
-            result = iterate_burning_ship_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
         }
         default: {
             result = iterate_mandelbrot(c, params.power, params.max_iter, params.escape_radius);

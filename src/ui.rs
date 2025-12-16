@@ -9,7 +9,7 @@ use crate::color::ColorScheme;
 use crate::fractal::julia::julia_presets;
 use crate::fractal::{
     buffalo, burning_ship, celtic, heart, julia, mandelbrot,
-    perpendicular, tricorn, FractalParams, FractalType,
+    tricorn, FractalParams, FractalType,
 };
 
 pub struct UiState {
@@ -19,7 +19,7 @@ pub struct UiState {
     pending_frame: Option<PreparedFrame>,
     panel_width: f32,
     /// Color scheme per fractal type (indexed by FractalType as u32)
-    fractal_colors: [u32; 13],
+    fractal_colors: [u32; 8],
 }
 
 struct PreparedFrame {
@@ -52,15 +52,10 @@ impl UiState {
                 FractalType::Julia.default_color_scheme(),
                 FractalType::BurningShip.default_color_scheme(),
                 FractalType::Tricorn.default_color_scheme(),
-                FractalType::Buffalo.default_color_scheme(),
                 FractalType::Celtic.default_color_scheme(),
-                FractalType::PerpendicularMandelbrot.default_color_scheme(),
-                FractalType::PerpendicularBurningShip.default_color_scheme(),
                 FractalType::Heart.default_color_scheme(),
-                FractalType::TricornJulia.default_color_scheme(),
                 FractalType::BuffaloJulia.default_color_scheme(),
                 FractalType::CelticJulia.default_color_scheme(),
-                FractalType::BurningShipJulia.default_color_scheme(),
             ],
         }
     }
@@ -108,7 +103,7 @@ impl UiState {
         !params_equal(&params_before, params)
     }
 
-    fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 13]) {
+    fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 8]) {
         ui.label("Fractal Type");
 
         let current = params.get_fractal_type();
@@ -183,7 +178,7 @@ impl UiState {
             });
     }
 
-    fn color_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 13]) {
+    fn color_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 8]) {
         ui.label("Color Scheme");
 
         let current = ColorScheme::from_u32(params.color_scheme);
@@ -245,15 +240,10 @@ impl UiState {
             FractalType::Julia => julia::presets(),
             FractalType::BurningShip => burning_ship::presets(),
             FractalType::Tricorn => tricorn::presets(),
-            FractalType::Buffalo => buffalo::presets(),
             FractalType::Celtic => celtic::presets(),
-            FractalType::PerpendicularMandelbrot => perpendicular::mandelbrot_presets(),
-            FractalType::PerpendicularBurningShip => perpendicular::burning_ship_presets(),
             FractalType::Heart => heart::presets(),
-            FractalType::TricornJulia => tricorn::julia_presets(),
             FractalType::BuffaloJulia => buffalo::julia_presets(),
             FractalType::CelticJulia => celtic::julia_presets(),
-            FractalType::BurningShipJulia => burning_ship::presets(),
         };
 
         egui::Grid::new("location_presets_grid")
@@ -321,7 +311,7 @@ impl UiState {
     }
 
     /// Build egui widgets and return the panel width.
-    fn build_ui(ctx: &Context, params: &mut FractalParams, fractal_colors: &mut [u32; 13]) -> f32 {
+    fn build_ui(ctx: &Context, params: &mut FractalParams, fractal_colors: &mut [u32; 8]) -> f32 {
         let response = egui::SidePanel::left("controls")
             .resizable(true)
             .default_width(280.0)

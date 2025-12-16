@@ -23,21 +23,3 @@ pub fn presets() -> Vec<LocationPreset> {
         },
     ]
 }
-
-/// Presets for Tricorn Julia
-pub fn julia_presets() -> Vec<LocationPreset> {
-    vec![
-        LocationPreset {
-            name: "Overview",
-            center: [0.0, 0.0],
-            zoom: 0.5,
-            fractal_type: FractalType::TricornJulia,
-        },
-        LocationPreset {
-            name: "Detail",
-            center: [0.3, 0.3],
-            zoom: 5.0,
-            fractal_type: FractalType::TricornJulia,
-        },
-    ]
-}

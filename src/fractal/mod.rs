@@ -6,7 +6,6 @@ pub mod celtic;
 pub mod heart;
 pub mod julia;
 pub mod mandelbrot;
-pub mod perpendicular;
 pub mod tricorn;
 
 /// Fractal type enumeration
@@ -18,37 +17,26 @@ pub enum FractalType {
     Julia = 1,
     BurningShip = 2,
     Tricorn = 3,
-    Buffalo = 4,
-    Celtic = 5,
-    PerpendicularMandelbrot = 6,
-    PerpendicularBurningShip = 7,
-    Heart = 8,
+    Celtic = 4,
+    Heart = 5,
     // Julia variants
-    TricornJulia = 9,
-    BuffaloJulia = 10,
-    CelticJulia = 11,
-    BurningShipJulia = 12,
+    BuffaloJulia = 6,
+    CelticJulia = 7,
 }
 
 impl FractalType {
     pub fn all() -> &'static [FractalType] {
         &[
-            // Mandelbrot family
+            // Classic fractals
             FractalType::Mandelbrot,
             FractalType::Tricorn,
-            FractalType::Buffalo,
             FractalType::Celtic,
-            FractalType::PerpendicularMandelbrot,
-            FractalType::PerpendicularBurningShip,
             FractalType::Heart,
-            // Julia family
+            FractalType::BurningShip,
+            // Julia variants
             FractalType::Julia,
-            FractalType::TricornJulia,
             FractalType::BuffaloJulia,
             FractalType::CelticJulia,
-            FractalType::BurningShipJulia,
-            // Ship family
-            FractalType::BurningShip,
         ]
     }
 
@@ -58,15 +46,10 @@ impl FractalType {
             FractalType::Julia => "Julia",
             FractalType::BurningShip => "Burning Ship",
             FractalType::Tricorn => "Tricorn",
-            FractalType::Buffalo => "Buffalo",
             FractalType::Celtic => "Celtic",
-            FractalType::PerpendicularMandelbrot => "Perpendicular Mandelbrot",
-            FractalType::PerpendicularBurningShip => "Perpendicular Ship",
             FractalType::Heart => "Heart",
-            FractalType::TricornJulia => "Tricorn Julia",
             FractalType::BuffaloJulia => "Buffalo Julia",
             FractalType::CelticJulia => "Celtic Julia",
-            FractalType::BurningShipJulia => "Burning Ship Julia",
         }
     }
 
@@ -75,10 +58,8 @@ impl FractalType {
         matches!(
             self,
             FractalType::Julia
-                | FractalType::TricornJulia
                 | FractalType::BuffaloJulia
                 | FractalType::CelticJulia
-                | FractalType::BurningShipJulia
         )
     }
 
@@ -88,16 +69,11 @@ impl FractalType {
             FractalType::Mandelbrot => 0,                  // Classic
             FractalType::Julia => 0,                       // Classic
             FractalType::BurningShip => 1,                 // Fire
-            FractalType::BurningShipJulia => 2,            // Ocean
             FractalType::Tricorn => 5,                     // Electric
-            FractalType::TricornJulia => 12,               // Cosmic
-            FractalType::Buffalo => 3,                     // Rainbow
-            FractalType::BuffaloJulia => 11,               // Plasma
             FractalType::Celtic => 8,                      // Forest
-            FractalType::CelticJulia => 19,                // Aurora
-            FractalType::PerpendicularMandelbrot => 0,     // Classic
-            FractalType::PerpendicularBurningShip => 9,    // Lava
             FractalType::Heart => 7,                       // Sunset
+            FractalType::BuffaloJulia => 11,               // Plasma
+            FractalType::CelticJulia => 19,                // Aurora
         }
     }
 }
@@ -155,15 +131,10 @@ impl FractalParams {
             1 => FractalType::Julia,
             2 => FractalType::BurningShip,
             3 => FractalType::Tricorn,
-            4 => FractalType::Buffalo,
-            5 => FractalType::Celtic,
-            6 => FractalType::PerpendicularMandelbrot,
-            7 => FractalType::PerpendicularBurningShip,
-            8 => FractalType::Heart,
-            9 => FractalType::TricornJulia,
-            10 => FractalType::BuffaloJulia,
-            11 => FractalType::CelticJulia,
-            12 => FractalType::BurningShipJulia,
+            4 => FractalType::Celtic,
+            5 => FractalType::Heart,
+            6 => FractalType::BuffaloJulia,
+            7 => FractalType::CelticJulia,
             _ => FractalType::Mandelbrot,
         }
     }
@@ -245,29 +216,11 @@ impl FractalParams {
             FractalType::Tricorn => {
                 self.center = [-0.3, 0.0];
             }
-            FractalType::Buffalo => {
-                self.center = [-0.5, 0.0];
-            }
             FractalType::Celtic => {
                 self.center = [-0.5, 0.0];
             }
-            FractalType::PerpendicularMandelbrot => {
-                self.center = [-0.5, 0.0];
-            }
-            FractalType::PerpendicularBurningShip => {
-                self.center = [-0.5, -0.5];
-            }
             FractalType::Heart => {
                 self.center = [0.0, 0.0];
-            }
-            FractalType::TricornJulia => {
-                self.center = [0.0, 0.0];
-                self.power = 4.65;
-            }
-            FractalType::BurningShipJulia => {
-                self.center = [0.0, 0.0];
-                self.max_iter = 10;
-                self.power = 3.5;
             }
             FractalType::BuffaloJulia
             | FractalType::CelticJulia => {
