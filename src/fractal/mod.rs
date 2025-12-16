@@ -3,12 +3,9 @@ use bytemuck::{Pod, Zeroable};
 pub mod burning_ship;
 pub mod buffalo;
 pub mod celtic;
-pub mod heart;
 pub mod julia;
-pub mod magnet;
 pub mod mandelbrot;
 pub mod newton;
-pub mod nova;
 pub mod phoenix;
 pub mod tricorn;
 
@@ -22,15 +19,12 @@ pub enum FractalType {
     BurningShip = 2,
     Tricorn = 3,
     Celtic = 4,
-    Heart = 5,
     // Julia variants
-    BuffaloJulia = 6,
-    CelticJulia = 7,
+    BuffaloJulia = 5,
+    CelticJulia = 6,
     // Advanced fractals
-    Newton = 8,
-    Phoenix = 9,
-    Magnet = 10,
-    Nova = 11,
+    Newton = 7,
+    Phoenix = 8,
 }
 
 impl FractalType {
@@ -40,7 +34,6 @@ impl FractalType {
             FractalType::Mandelbrot,
             FractalType::Tricorn,
             FractalType::Celtic,
-            FractalType::Heart,
             FractalType::BurningShip,
             // Julia variants
             FractalType::Julia,
@@ -49,8 +42,6 @@ impl FractalType {
             // Advanced fractals
             FractalType::Newton,
             FractalType::Phoenix,
-            FractalType::Magnet,
-            FractalType::Nova,
         ]
     }
 
@@ -61,13 +52,10 @@ impl FractalType {
             FractalType::BurningShip => "Burning Ship",
             FractalType::Tricorn => "Tricorn",
             FractalType::Celtic => "Celtic",
-            FractalType::Heart => "Heart",
             FractalType::BuffaloJulia => "Buffalo Julia",
             FractalType::CelticJulia => "Celtic Julia",
             FractalType::Newton => "Newton",
             FractalType::Phoenix => "Phoenix",
-            FractalType::Magnet => "Magnet",
-            FractalType::Nova => "Nova",
         }
     }
 
@@ -78,7 +66,6 @@ impl FractalType {
             FractalType::Julia
                 | FractalType::BuffaloJulia
                 | FractalType::CelticJulia
-                | FractalType::Nova
         )
     }
 
@@ -90,13 +77,10 @@ impl FractalType {
             FractalType::BurningShip => 1,                 // Fire
             FractalType::Tricorn => 5,                     // Electric
             FractalType::Celtic => 8,                      // Forest
-            FractalType::Heart => 7,                       // Sunset
             FractalType::BuffaloJulia => 11,               // Plasma
             FractalType::CelticJulia => 19,                // Aurora
             FractalType::Newton => 3,                      // Rainbow (shows root basins)
             FractalType::Phoenix => 12,                    // Cosmic
-            FractalType::Magnet => 22,                     // Magma
-            FractalType::Nova => 6,                        // Neon
         }
     }
 }
@@ -155,13 +139,10 @@ impl FractalParams {
             2 => FractalType::BurningShip,
             3 => FractalType::Tricorn,
             4 => FractalType::Celtic,
-            5 => FractalType::Heart,
-            6 => FractalType::BuffaloJulia,
-            7 => FractalType::CelticJulia,
-            8 => FractalType::Newton,
-            9 => FractalType::Phoenix,
-            10 => FractalType::Magnet,
-            11 => FractalType::Nova,
+            5 => FractalType::BuffaloJulia,
+            6 => FractalType::CelticJulia,
+            7 => FractalType::Newton,
+            8 => FractalType::Phoenix,
             _ => FractalType::Mandelbrot,
         }
     }
@@ -246,9 +227,6 @@ impl FractalParams {
             FractalType::Celtic => {
                 self.center = [-0.5, 0.0];
             }
-            FractalType::Heart => {
-                self.center = [0.0, 0.0];
-            }
             FractalType::BuffaloJulia
             | FractalType::CelticJulia => {
                 self.center = [0.0, 0.0];
@@ -260,15 +238,6 @@ impl FractalParams {
             FractalType::Phoenix => {
                 self.center = [0.0, 0.0];
                 self.zoom = 0.5;
-            }
-            FractalType::Magnet => {
-                self.center = [1.5, 0.0];
-                self.zoom = 0.4;
-            }
-            FractalType::Nova => {
-                self.center = [0.0, 0.0];
-                self.zoom = 0.8;
-                self.julia_c = [0.5, 0.0];
             }
         }
     }
