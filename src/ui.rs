@@ -7,9 +7,10 @@ use winit::window::Window;
 
 use crate::color::ColorScheme;
 use crate::fractal::julia::julia_presets;
+use crate::fractal::nova::nova_c_presets;
 use crate::fractal::{
-    buffalo, burning_ship, celtic, heart, julia, mandelbrot,
-    tricorn, FractalParams, FractalType,
+    buffalo, burning_ship, celtic, heart, julia, magnet, mandelbrot,
+    newton, nova, phoenix, tricorn, FractalParams, FractalType,
 };
 
 pub struct UiState {
@@ -19,7 +20,7 @@ pub struct UiState {
     pending_frame: Option<PreparedFrame>,
     panel_width: f32,
     /// Color scheme per fractal type (indexed by FractalType as u32)
-    fractal_colors: [u32; 8],
+    fractal_colors: [u32; 12],
 }
 
 struct PreparedFrame {
@@ -56,6 +57,10 @@ impl UiState {
                 FractalType::Heart.default_color_scheme(),
                 FractalType::BuffaloJulia.default_color_scheme(),
                 FractalType::CelticJulia.default_color_scheme(),
+                FractalType::Newton.default_color_scheme(),
+                FractalType::Phoenix.default_color_scheme(),
+                FractalType::Magnet.default_color_scheme(),
+                FractalType::Nova.default_color_scheme(),
             ],
         }
     }
@@ -103,7 +108,7 @@ impl UiState {
         !params_equal(&params_before, params)
     }
 
-    fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 8]) {
+    fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 12]) {
         ui.label("Fractal Type");
 
         let current = params.get_fractal_type();
@@ -153,7 +158,13 @@ impl UiState {
     }
 
     fn julia_section(ui: &mut Ui, params: &mut FractalParams) {
-        ui.label("Julia Constant");
+        let fractal_type = params.get_fractal_type();
+        let label = if fractal_type == FractalType::Nova {
+            "Nova Constant"
+        } else {
+            "Julia Constant"
+        };
+        ui.label(label);
 
         // C real part
         ui.add(Slider::new(&mut params.julia_c[0], -2.0..=2.0).text("Real"));
@@ -161,24 +172,41 @@ impl UiState {
         // C imaginary part
         ui.add(Slider::new(&mut params.julia_c[1], -2.0..=2.0).text("Imaginary"));
 
-        // Julia presets
-        ui.label("Julia Presets:");
-        egui::Grid::new("julia_presets_grid")
-            .num_columns(2)
-            .show(ui, |ui| {
-                let presets = julia_presets();
-                for (i, preset) in presets.iter().enumerate() {
-                    if ui.button(preset.name).clicked() {
-                        params.julia_c = preset.c;
+        // Show presets based on fractal type
+        if fractal_type == FractalType::Nova {
+            ui.label("Nova Presets:");
+            egui::Grid::new("nova_presets_grid")
+                .num_columns(2)
+                .show(ui, |ui| {
+                    let presets = nova_c_presets();
+                    for (i, preset) in presets.iter().enumerate() {
+                        if ui.button(preset.name).clicked() {
+                            params.julia_c = preset.c;
+                        }
+                        if (i + 1) % 2 == 0 {
+                            ui.end_row();
+                        }
                     }
-                    if (i + 1) % 2 == 0 {
-                        ui.end_row();
+                });
+        } else {
+            ui.label("Julia Presets:");
+            egui::Grid::new("julia_presets_grid")
+                .num_columns(2)
+                .show(ui, |ui| {
+                    let presets = julia_presets();
+                    for (i, preset) in presets.iter().enumerate() {
+                        if ui.button(preset.name).clicked() {
+                            params.julia_c = preset.c;
+                        }
+                        if (i + 1) % 2 == 0 {
+                            ui.end_row();
+                        }
                     }
-                }
-            });
+                });
+        }
     }
 
-    fn color_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 8]) {
+    fn color_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 12]) {
         ui.label("Color Scheme");
 
         let current = ColorScheme::from_u32(params.color_scheme);
@@ -244,6 +272,10 @@ impl UiState {
             FractalType::Heart => heart::presets(),
             FractalType::BuffaloJulia => buffalo::julia_presets(),
             FractalType::CelticJulia => celtic::julia_presets(),
+            FractalType::Newton => newton::presets(),
+            FractalType::Phoenix => phoenix::presets(),
+            FractalType::Magnet => magnet::presets(),
+            FractalType::Nova => nova::presets(),
         };
 
         egui::Grid::new("location_presets_grid")
@@ -311,7 +343,7 @@ impl UiState {
     }
 
     /// Build egui widgets and return the panel width.
-    fn build_ui(ctx: &Context, params: &mut FractalParams, fractal_colors: &mut [u32; 8]) -> f32 {
+    fn build_ui(ctx: &Context, params: &mut FractalParams, fractal_colors: &mut [u32; 12]) -> f32 {
         let response = egui::SidePanel::left("controls")
             .resizable(true)
             .default_width(280.0)

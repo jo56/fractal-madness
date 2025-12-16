@@ -37,6 +37,11 @@ const FRACTAL_HEART: u32 = 5u;
 // Julia variants
 const FRACTAL_BUFFALO_JULIA: u32 = 6u;
 const FRACTAL_CELTIC_JULIA: u32 = 7u;
+// Advanced fractals
+const FRACTAL_NEWTON: u32 = 8u;
+const FRACTAL_PHOENIX: u32 = 9u;
+const FRACTAL_MAGNET: u32 = 10u;
+const FRACTAL_NOVA: u32 = 11u;
 
 // Flag bit masks
 const FLAG_SMOOTH: u32 = 1u;
@@ -223,6 +228,175 @@ fn iterate_heart(c: vec2<f32>, max_iter: u32, escape_radius: f32) -> vec2<f32> {
         let new_x = z.x * z.x - z.y * z.y + c.x;
         let new_y = 2.0 * abs(z.x) * z.y + c.y;
         z = vec2<f32>(new_x, new_y);
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Newton fractal: z = z - (z^n - 1) / (n * z^(n-1))
+// Finds roots of z^n = 1, colors by convergence rate
+fn iterate_newton(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = c;
+    var i: u32 = 0u;
+    let tolerance = 0.000001;
+
+    // Pre-compute the roots of unity for coloring
+    // For z^3 = 1, roots are at angles 0, 2pi/3, 4pi/3
+    let root1 = vec2<f32>(1.0, 0.0);
+    let root2 = vec2<f32>(cos(2.0 * PI / power), sin(2.0 * PI / power));
+    let root3 = vec2<f32>(cos(4.0 * PI / power), sin(4.0 * PI / power));
+
+    while (i < max_iter) {
+        // Check if we've converged to a root
+        let d1 = length(z - root1);
+        let d2 = length(z - root2);
+        let d3 = length(z - root3);
+
+        if (d1 < tolerance || d2 < tolerance || d3 < tolerance) {
+            break;
+        }
+
+        // Avoid division by zero
+        let z_mag2 = dot(z, z);
+        if (z_mag2 < 0.0000001) {
+            break;
+        }
+
+        // Newton's method: z = z - f(z)/f'(z) where f(z) = z^n - 1
+        // f'(z) = n * z^(n-1)
+        // z_new = z - (z^n - 1) / (n * z^(n-1))
+        //       = z - z/n + 1/(n * z^(n-1))
+        //       = z * (1 - 1/n) + 1/(n * z^(n-1))
+        //       = z * (n-1)/n + 1/(n * z^(n-1))
+
+        let zn = cpow(z, power);
+        let zn_minus_1 = cpow(z, power - 1.0);
+
+        // Compute 1 / (n * z^(n-1)) using complex division
+        let denom = vec2<f32>(power, 0.0);
+        let nz = cmul(denom, zn_minus_1);
+        let nz_mag2 = dot(nz, nz);
+        if (nz_mag2 < 0.0000001) {
+            break;
+        }
+        // 1/nz = conj(nz) / |nz|^2
+        let inv_nz = vec2<f32>(nz.x, -nz.y) / nz_mag2;
+
+        // z^n - 1
+        let f_z = zn - vec2<f32>(1.0, 0.0);
+
+        // f(z) / f'(z)
+        let correction = cmul(f_z, inv_nz);
+
+        z = z - correction;
+        i = i + 1u;
+    }
+
+    // Return iteration count and distance to nearest root for smooth coloring
+    let d1 = length(z - root1);
+    let d2 = length(z - root2);
+    let d3 = length(z - root3);
+    let min_dist = min(d1, min(d2, d3));
+
+    return vec2<f32>(f32(i), min_dist * 1000.0 + 1.0);
+}
+
+// Phoenix fractal: z_new = z^2 + c + p * z_prev
+// Uses previous iteration value for flowing feather-like patterns
+fn iterate_phoenix(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var z_prev = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    // Phoenix parameter p (stored in power, typical values: -0.5 to 0.5)
+    // Using a fixed interesting value for the Mandelbrot-style iteration
+    let p = vec2<f32>(0.5667, -0.5);  // Classic phoenix parameter
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        let z_new = cmul(z, z) + c + cmul(p, z_prev);
+        z_prev = z;
+        z = z_new;
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Magnet Type I fractal: z = ((z^2 + c - 1) / (2z + c - 2))^2
+// Based on Ising model in physics, creates bubble-like structures
+fn iterate_magnet(c: vec2<f32>, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = vec2<f32>(0.0, 0.0);
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        // Numerator: z^2 + c - 1
+        let z2 = cmul(z, z);
+        let num = z2 + c - vec2<f32>(1.0, 0.0);
+
+        // Denominator: 2z + c - 2
+        let denom = 2.0 * z + c - vec2<f32>(2.0, 0.0);
+
+        // Avoid division by zero
+        let denom_mag2 = dot(denom, denom);
+        if (denom_mag2 < 0.0000001) {
+            // Return as if escaped
+            return vec2<f32>(f32(i), escape2 + 1.0);
+        }
+
+        // Complex division: num / denom = num * conj(denom) / |denom|^2
+        let denom_conj = vec2<f32>(denom.x, -denom.y);
+        let quotient = cmul(num, denom_conj) / denom_mag2;
+
+        // Square the result
+        z = cmul(quotient, quotient);
+
+        i = i + 1u;
+    }
+
+    return vec2<f32>(f32(i), dot(z, z));
+}
+
+// Nova fractal: z = z - R * (z^n - 1) / (n * z^(n-1)) + c
+// Newton's method with relaxation R and Julia-style constant c
+fn iterate_nova(z_init: vec2<f32>, c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+    var z = z_init;
+    var i: u32 = 0u;
+    let escape2 = escape_radius * escape_radius;
+
+    // Relaxation parameter (typical: 1.0, but can vary for different effects)
+    let R = 1.0;
+
+    while (i < max_iter && dot(z, z) < escape2) {
+        let z_mag2 = dot(z, z);
+        if (z_mag2 < 0.0000001) {
+            break;
+        }
+
+        // z^n
+        let zn = cpow(z, power);
+        // z^(n-1)
+        let zn1 = cpow(z, power - 1.0);
+
+        // n * z^(n-1)
+        let denom = vec2<f32>(power, 0.0);
+        let nzn1 = cmul(denom, zn1);
+
+        let nzn1_mag2 = dot(nzn1, nzn1);
+        if (nzn1_mag2 < 0.0000001) {
+            break;
+        }
+
+        // (z^n - 1) / (n * z^(n-1))
+        let f_z = zn - vec2<f32>(1.0, 0.0);
+        let inv_nzn1 = vec2<f32>(nzn1.x, -nzn1.y) / nzn1_mag2;
+        let newton_step = cmul(f_z, inv_nzn1);
+
+        // z = z - R * newton_step + c
+        z = z - R * newton_step + c;
+
         i = i + 1u;
     }
 
@@ -550,6 +724,18 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
         }
         case FRACTAL_CELTIC_JULIA: {
             result = iterate_celtic_julia(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_NEWTON: {
+            result = iterate_newton(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_PHOENIX: {
+            result = iterate_phoenix(c, params.power, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_MAGNET: {
+            result = iterate_magnet(c, params.max_iter, params.escape_radius);
+        }
+        case FRACTAL_NOVA: {
+            result = iterate_nova(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
         }
         default: {
             result = iterate_mandelbrot(c, params.power, params.max_iter, params.escape_radius);

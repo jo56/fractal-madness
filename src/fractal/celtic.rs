@@ -15,12 +15,6 @@ pub fn presets() -> Vec<LocationPreset> {
             zoom: 10.0,
             fractal_type: FractalType::Celtic,
         },
-        LocationPreset {
-            name: "Pattern",
-            center: [0.0, 0.6],
-            zoom: 20.0,
-            fractal_type: FractalType::Celtic,
-        },
     ]
 }
 
