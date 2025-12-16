@@ -341,9 +341,10 @@ fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
+    // Subtract frame size: 8px each side for gray border
     let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
-        let w = parent.client_width() as f64;
-        let h = parent.client_height() as f64;
+        let w = (parent.client_width() as f64) - 16.0;
+        let h = (parent.client_height() as f64) - 16.0;
         if w > 0.0 && h > 0.0 {
             (w, h)
         } else {
@@ -379,9 +380,10 @@ fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
+    // Subtract frame size: 8px each side for gray border
     let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
-        let w = parent.client_width() as f64;
-        let h = parent.client_height() as f64;
+        let w = (parent.client_width() as f64) - 16.0;
+        let h = (parent.client_height() as f64) - 16.0;
         if w > 0.0 && h > 0.0 {
             (w, h)
         } else {

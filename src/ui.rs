@@ -31,6 +31,18 @@ struct PreparedFrame {
 impl UiState {
     pub fn new(device: &Device, format: TextureFormat, window: &Window) -> Self {
         let ctx = Context::default();
+
+        // Set Windows 95-style sharp corners
+        ctx.style_mut(|style| {
+            style.visuals.window_rounding = egui::Rounding::ZERO;
+            style.visuals.menu_rounding = egui::Rounding::ZERO;
+            style.visuals.widgets.noninteractive.rounding = egui::Rounding::ZERO;
+            style.visuals.widgets.inactive.rounding = egui::Rounding::ZERO;
+            style.visuals.widgets.hovered.rounding = egui::Rounding::ZERO;
+            style.visuals.widgets.active.rounding = egui::Rounding::ZERO;
+            style.visuals.widgets.open.rounding = egui::Rounding::ZERO;
+        });
+
         let state = State::new(
             ctx.clone(),
             ctx.viewport_id(),
@@ -105,7 +117,7 @@ impl UiState {
     }
 
     fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 9]) {
-        ui.label("Fractal Type");
+        ui.heading("Fractal Type");
 
         let current = params.get_fractal_type();
         egui::ComboBox::from_id_salt("fractal_type")
@@ -335,8 +347,6 @@ impl UiState {
             .default_width(280.0)
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.heading("Fractal Madness");
-                    ui.separator();
 
                     Self::fractal_type_section(ui, params, fractal_colors);
                     ui.separator();
