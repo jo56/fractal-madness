@@ -142,6 +142,14 @@ impl UiState {
         );
         params.max_iter = max_iter as u32;
 
+        // Performance warning for high iteration counts
+        if params.max_iter > 500 {
+            ui.colored_label(
+                egui::Color32::from_rgb(255, 180, 0),
+                "High iterations may reduce performance",
+            );
+        }
+
         // Power
         ui.add(Slider::new(&mut params.power, 2.0..=8.0).text("Power"));
 
