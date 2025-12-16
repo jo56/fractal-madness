@@ -1,73 +1,55 @@
-use super::{FractalType, LocationPreset};
+use super::{FractalParams, FractalType, LocationPreset};
 
-/// Interesting location presets for Newton z³-1
-pub fn z3_presets() -> Vec<LocationPreset> {
-    vec![
-        LocationPreset {
-            name: "Overview",
-            center: [0.0, 0.0],
-            zoom: 0.5,
-            fractal_type: FractalType::NewtonZ3,
-        },
-        LocationPreset {
-            name: "Junction",
-            center: [0.0, 0.0],
-            zoom: 5.0,
-            fractal_type: FractalType::NewtonZ3,
-        },
-        LocationPreset {
-            name: "Detail",
-            center: [0.5, 0.866],
-            zoom: 20.0,
-            fractal_type: FractalType::NewtonZ3,
-        },
-    ]
+/// Default Newton fractal parameters
+#[allow(dead_code)]
+pub fn default_params() -> FractalParams {
+    FractalParams {
+        center: [0.0, 0.0],
+        zoom: 0.8,
+        max_iter: 256,
+        power: 3.0,
+        escape_radius: 4.0,
+        fractal_type: FractalType::Newton as u32,
+        ..Default::default()
+    }
 }
 
-/// Interesting location presets for Newton z⁴-1
-pub fn z4_presets() -> Vec<LocationPreset> {
+/// Interesting location presets for Newton fractal
+/// The Newton fractal shows basin boundaries for root-finding of z^n = 1
+/// For z³-1, roots are at (1,0), (-0.5, 0.866), (-0.5, -0.866)
+/// IMPORTANT: Detail is at BOUNDARIES between basins, not near roots (which are solid)
+/// Boundaries radiate from the origin where all three basins meet
+pub fn presets() -> Vec<LocationPreset> {
     vec![
         LocationPreset {
             name: "Overview",
             center: [0.0, 0.0],
-            zoom: 0.5,
-            fractal_type: FractalType::NewtonZ4,
+            zoom: 1.5,
+            fractal_type: FractalType::Newton, power: None,
         },
         LocationPreset {
-            name: "Cross",
+            name: "Triple Junction",
             center: [0.0, 0.0],
-            zoom: 5.0,
-            fractal_type: FractalType::NewtonZ4,
+            zoom: 4.0,
+            fractal_type: FractalType::Newton, power: None,
         },
         LocationPreset {
-            name: "Boundary",
-            center: [0.707, 0.707],
-            zoom: 20.0,
-            fractal_type: FractalType::NewtonZ4,
-        },
-    ]
-}
-
-/// Interesting location presets for Nova
-pub fn nova_presets() -> Vec<LocationPreset> {
-    vec![
-        LocationPreset {
-            name: "Overview",
-            center: [0.0, 0.0],
-            zoom: 0.5,
-            fractal_type: FractalType::Nova,
+            name: "Basin Boundary",
+            center: [0.25, 0.43],
+            zoom: 8.0,
+            fractal_type: FractalType::Newton, power: None,
         },
         LocationPreset {
-            name: "Spiral",
-            center: [0.5, 0.5],
-            zoom: 5.0,
-            fractal_type: FractalType::Nova,
+            name: "Spiral Detail",
+            center: [0.15, 0.26],
+            zoom: 25.0,
+            fractal_type: FractalType::Newton, power: None,
         },
         LocationPreset {
-            name: "Edge",
-            center: [-0.5, 0.0],
-            zoom: 10.0,
-            fractal_type: FractalType::Nova,
+            name: "Fractal Vein",
+            center: [0.1, 0.17],
+            zoom: 60.0,
+            fractal_type: FractalType::Newton, power: None,
         },
     ]
 }
