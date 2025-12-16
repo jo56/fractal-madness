@@ -5,20 +5,20 @@ pub fn presets() -> Vec<LocationPreset> {
     vec![
         LocationPreset {
             name: "Overview",
-            center: [-0.5, 0.0],
-            zoom: 0.8,
+            center: [0.0, 0.0],
+            zoom: 0.5,
             fractal_type: FractalType::Buffalo,
         },
         LocationPreset {
-            name: "Horns",
-            center: [-1.2, 0.3],
-            zoom: 50.0,
+            name: "Horn",
+            center: [-0.5, 0.5],
+            zoom: 15.0,
             fractal_type: FractalType::Buffalo,
         },
         LocationPreset {
-            name: "Spiral",
-            center: [-0.2, 0.8],
-            zoom: 100.0,
+            name: "Edge Detail",
+            center: [0.3, 0.0],
+            zoom: 30.0,
             fractal_type: FractalType::Buffalo,
         },
     ]
@@ -30,7 +30,13 @@ pub fn julia_presets() -> Vec<LocationPreset> {
         LocationPreset {
             name: "Overview",
             center: [0.0, 0.0],
-            zoom: 0.8,
+            zoom: 0.5,
+            fractal_type: FractalType::BuffaloJulia,
+        },
+        LocationPreset {
+            name: "Detail",
+            center: [0.25, 0.25],
+            zoom: 5.0,
             fractal_type: FractalType::BuffaloJulia,
         },
     ]

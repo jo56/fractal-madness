@@ -391,11 +391,20 @@ fn palette_sunset(t: f32) -> vec3<f32> {
 }
 
 fn palette_forest(t: f32) -> vec3<f32> {
-    return vec3<f32>(
-        0.1 + 0.2 * t,
-        0.3 + 0.5 * t,
-        0.1 + 0.15 * t
-    );
+    // Multi-zone forest: floor browns -> moss -> vibrant leaves -> sunlit canopy
+    if (t < 0.25) {
+        let s = t / 0.25;
+        return vec3<f32>(0.15 + 0.1 * s, 0.1 + 0.2 * s, 0.05 + 0.05 * s);  // Dark browns
+    } else if (t < 0.5) {
+        let s = (t - 0.25) / 0.25;
+        return vec3<f32>(0.25 - 0.1 * s, 0.3 + 0.35 * s, 0.1 + 0.1 * s);   // Moss greens
+    } else if (t < 0.75) {
+        let s = (t - 0.5) / 0.25;
+        return vec3<f32>(0.15 + 0.25 * s, 0.65 + 0.2 * s, 0.2 - 0.05 * s); // Vibrant leaves
+    } else {
+        let s = (t - 0.75) / 0.25;
+        return vec3<f32>(0.4 + 0.4 * s, 0.85 + 0.15 * s, 0.15 + 0.35 * s); // Sunlit canopy
+    }
 }
 
 fn palette_lava(t: f32) -> vec3<f32> {
@@ -439,10 +448,13 @@ fn palette_autumn(t: f32) -> vec3<f32> {
 }
 
 fn palette_matrix(t: f32) -> vec3<f32> {
+    // Enhanced Matrix with digital rain effect - varied greens with subtle highlights
+    let base = 0.1 + 0.9 * t;
+    let pulse = 0.5 + 0.5 * sin(t * 20.0 * PI);
     return vec3<f32>(
-        0.0,
-        0.2 + 0.8 * t,
-        0.0
+        0.02 * pulse * t,              // Subtle warmth
+        base * (0.7 + 0.3 * pulse),    // Pulsing green
+        0.05 + 0.15 * pow(t, 2.0)      // Cyan highlights
     );
 }
 
@@ -472,11 +484,21 @@ fn palette_metal(t: f32) -> vec3<f32> {
 }
 
 fn palette_toxic(t: f32) -> vec3<f32> {
-    return vec3<f32>(
-        0.2 * t,
-        0.5 + 0.5 * t,
-        0.1 + 0.2 * t
-    );
+    // Radioactive glow with multiple color zones
+    let pulse = 0.5 + 0.5 * sin(t * 8.0 * PI);
+    if (t < 0.3) {
+        let s = t / 0.3;
+        return vec3<f32>(0.1 * s, 0.2 + 0.3 * s, 0.05 + 0.1 * s);           // Dark sludge
+    } else if (t < 0.6) {
+        let s = (t - 0.3) / 0.3;
+        return vec3<f32>(0.1 + 0.3 * s * pulse, 0.5 + 0.4 * s, 0.15 + 0.15 * s); // Glowing
+    } else if (t < 0.85) {
+        let s = (t - 0.6) / 0.25;
+        return vec3<f32>(0.4 + 0.5 * s, 0.9 + 0.1 * s, 0.3 - 0.1 * s);      // Bright toxic
+    } else {
+        let s = (t - 0.85) / 0.15;
+        return vec3<f32>(0.9 + 0.1 * s, 1.0, 0.2 + 0.6 * s);                // Hot spots
+    }
 }
 
 fn palette_aurora(t: f32) -> vec3<f32> {
@@ -525,14 +547,28 @@ fn palette_psychedelic(t: f32) -> vec3<f32> {
 }
 
 fn palette_thermal(t: f32) -> vec3<f32> {
-    if (t < 0.33) {
-        return vec3<f32>(0.0, 0.0, t * 3.0);
-    } else if (t < 0.67) {
-        let s = (t - 0.33) * 3.0;
-        return vec3<f32>(s, 0.0, 1.0 - s);
+    // 7-zone smooth thermal imaging: black -> blue -> cyan -> green -> yellow -> orange -> red -> white
+    if (t < 0.15) {
+        let s = t / 0.15;
+        return vec3<f32>(0.0, 0.0, s * 0.5);                    // Black to dark blue
+    } else if (t < 0.3) {
+        let s = (t - 0.15) / 0.15;
+        return vec3<f32>(0.0, s * 0.8, 0.5 + s * 0.5);          // Dark blue to cyan
+    } else if (t < 0.45) {
+        let s = (t - 0.3) / 0.15;
+        return vec3<f32>(s * 0.5, 0.8 + s * 0.2, 1.0 - s * 0.5); // Cyan to greenish
+    } else if (t < 0.6) {
+        let s = (t - 0.45) / 0.15;
+        return vec3<f32>(0.5 + s * 0.5, 1.0, 0.5 - s * 0.5);    // Green to yellow
+    } else if (t < 0.75) {
+        let s = (t - 0.6) / 0.15;
+        return vec3<f32>(1.0, 1.0 - s * 0.4, 0.0);              // Yellow to orange
+    } else if (t < 0.9) {
+        let s = (t - 0.75) / 0.15;
+        return vec3<f32>(1.0, 0.6 - s * 0.6, 0.0);              // Orange to red
     } else {
-        let s = (t - 0.67) * 3.0;
-        return vec3<f32>(1.0, s, 0.0);
+        let s = (t - 0.9) / 0.1;
+        return vec3<f32>(1.0, s, s);                            // Red to white
     }
 }
 

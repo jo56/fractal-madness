@@ -21,7 +21,6 @@ console_error_panic_hook = "0.1"
 log = "0.4"
 console_log = "1.0"
 pollster = "0.3"
-num-bigfloat = "1.7"
 getrandom = { version = "0.2", features = ["js"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

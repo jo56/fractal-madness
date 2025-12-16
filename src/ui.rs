@@ -6,7 +6,6 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::color::ColorScheme;
-use crate::deep_zoom::DeepZoomParams;
 use crate::fractal::julia::julia_presets;
 use crate::fractal::{
     buffalo, burning_ship, celtic, heart, julia, mandelbrot,
@@ -19,8 +18,8 @@ pub struct UiState {
     renderer: Renderer,
     pending_frame: Option<PreparedFrame>,
     panel_width: f32,
-    /// Whether compute shaders are supported (enables deep zoom UI)
-    pub has_compute_shaders: bool,
+    /// Color scheme per fractal type (indexed by FractalType as u32)
+    fractal_colors: [u32; 13],
 }
 
 struct PreparedFrame {
@@ -38,7 +37,7 @@ impl UiState {
             window,
             Some(window.scale_factor() as f32),
             None,
-            None, // max_texture_side
+            None,
         );
         let renderer = Renderer::new(device, format, None, 1, false);
 
@@ -47,8 +46,22 @@ impl UiState {
             state,
             renderer,
             pending_frame: None,
-            panel_width: 280.0, // default width
-            has_compute_shaders: false, // Will be set by lib.rs
+            panel_width: 280.0,
+            fractal_colors: [
+                FractalType::Mandelbrot.default_color_scheme(),
+                FractalType::Julia.default_color_scheme(),
+                FractalType::BurningShip.default_color_scheme(),
+                FractalType::Tricorn.default_color_scheme(),
+                FractalType::Buffalo.default_color_scheme(),
+                FractalType::Celtic.default_color_scheme(),
+                FractalType::PerpendicularMandelbrot.default_color_scheme(),
+                FractalType::PerpendicularBurningShip.default_color_scheme(),
+                FractalType::Heart.default_color_scheme(),
+                FractalType::TricornJulia.default_color_scheme(),
+                FractalType::BuffaloJulia.default_color_scheme(),
+                FractalType::CelticJulia.default_color_scheme(),
+                FractalType::BurningShipJulia.default_color_scheme(),
+            ],
         }
     }
 
@@ -63,16 +76,6 @@ impl UiState {
 
     /// Run egui for this frame and stage paint jobs. Returns true if params changed.
     pub fn prepare(&mut self, window: &Window, params: &mut FractalParams) -> bool {
-        self.prepare_with_deep(window, params, None)
-    }
-
-    /// Run egui for this frame with deep zoom params. Returns true if params changed.
-    pub fn prepare_with_deep(
-        &mut self,
-        window: &Window,
-        params: &mut FractalParams,
-        deep_params: Option<&mut DeepZoomParams>,
-    ) -> bool {
         let size = window.inner_size();
         let screen_descriptor = ScreenDescriptor {
             size_in_pixels: [size.width.max(1), size.height.max(1)],
@@ -81,15 +84,11 @@ impl UiState {
 
         let raw_input = self.state.take_egui_input(window);
         let params_before = *params;
-        let has_compute = self.has_compute_shaders;
         let mut panel_width = self.panel_width;
-
-        // Use UnsafeCell or similar pattern to pass mutable reference through closure
-        // For simplicity, we'll use an Option pattern
-        let mut deep_params_ref = deep_params;
+        let fractal_colors = &mut self.fractal_colors;
 
         let full_output = self.ctx.run(raw_input, |ctx| {
-            panel_width = Self::build_ui_with_deep(ctx, params, deep_params_ref.as_deref_mut(), has_compute);
+            panel_width = Self::build_ui(ctx, params, fractal_colors);
         });
         self.panel_width = panel_width;
 
@@ -109,7 +108,7 @@ impl UiState {
         !params_equal(&params_before, params)
     }
 
-    fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams) {
+    fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 13]) {
         ui.label("Fractal Type");
 
         let current = params.get_fractal_type();
@@ -119,7 +118,16 @@ impl UiState {
                 for ft in FractalType::all() {
                     let selected = *ft == current;
                     if ui.selectable_label(selected, ft.name()).clicked() {
+                        // Save current color for current fractal
+                        let old_type = params.fractal_type as usize;
+                        fractal_colors[old_type] = params.color_scheme;
+
+                        // Switch fractal type
                         params.set_fractal_type(*ft);
+
+                        // Load saved color for new fractal
+                        params.color_scheme = fractal_colors[*ft as usize];
+
                         params.reset();
                     }
                 }
@@ -175,7 +183,7 @@ impl UiState {
             });
     }
 
-    fn color_section(ui: &mut Ui, params: &mut FractalParams) {
+    fn color_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 13]) {
         ui.label("Color Scheme");
 
         let current = ColorScheme::from_u32(params.color_scheme);
@@ -186,6 +194,8 @@ impl UiState {
                     let selected = *cs == current;
                     if ui.selectable_label(selected, cs.name()).clicked() {
                         params.color_scheme = *cs as u32;
+                        // Save color for current fractal type
+                        fractal_colors[params.fractal_type as usize] = params.color_scheme;
                     }
                 }
             });
@@ -260,49 +270,6 @@ impl UiState {
         });
     }
 
-    fn deep_zoom_section(ui: &mut Ui, deep_params: &mut DeepZoomParams, has_compute: bool) {
-        ui.label("Deep Zoom Mode");
-
-        if !has_compute {
-            ui.label("(Requires WebGPU - not available)");
-            ui.label("Your browser uses WebGL which doesn't support compute shaders.");
-            return;
-        }
-
-        // Enable checkbox
-        ui.checkbox(&mut deep_params.enabled, "Enable Deep Zoom");
-
-        if deep_params.enabled {
-            // Show current zoom depth
-            ui.label(format!("Zoom: 10^{:.1}", deep_params.log10_zoom));
-
-            // Max iterations for deep mode
-            let mut max_iter = deep_params.max_iter as f32;
-            ui.add(
-                Slider::new(&mut max_iter, 100.0..=100000.0)
-                    .logarithmic(true)
-                    .text("Max Iterations"),
-            );
-            deep_params.max_iter = max_iter as u32;
-
-            // Precision display
-            ui.label(format!("Precision: {} bits", deep_params.precision));
-
-            // Center coordinates
-            let (re, im) = deep_params.center_f64();
-            ui.label(format!("Center Re: {:.15}", re));
-            ui.label(format!("Center Im: {:.15}", im));
-
-            // Render mode
-            ui.label(format!("Render Mode: {:?}", deep_params.render_mode));
-
-            // Reset deep zoom
-            if ui.button("Reset Deep Zoom").clicked() {
-                deep_params.reset();
-            }
-        }
-    }
-
     /// Paint the previously prepared egui frame over the target view.
     pub fn render(
         &mut self,
@@ -354,17 +321,7 @@ impl UiState {
     }
 
     /// Build egui widgets and return the panel width.
-    fn build_ui(ctx: &Context, params: &mut FractalParams) -> f32 {
-        Self::build_ui_with_deep(ctx, params, None, false)
-    }
-
-    /// Build egui widgets with deep zoom support and return the panel width.
-    fn build_ui_with_deep(
-        ctx: &Context,
-        params: &mut FractalParams,
-        deep_params: Option<&mut DeepZoomParams>,
-        has_compute: bool,
-    ) -> f32 {
+    fn build_ui(ctx: &Context, params: &mut FractalParams, fractal_colors: &mut [u32; 13]) -> f32 {
         let response = egui::SidePanel::left("controls")
             .resizable(true)
             .default_width(280.0)
@@ -373,7 +330,7 @@ impl UiState {
                     ui.heading("Fractal Madness");
                     ui.separator();
 
-                    Self::fractal_type_section(ui, params);
+                    Self::fractal_type_section(ui, params, fractal_colors);
                     ui.separator();
 
                     Self::parameters_section(ui, params);
@@ -385,19 +342,11 @@ impl UiState {
                         ui.separator();
                     }
 
-                    Self::color_section(ui, params);
+                    Self::color_section(ui, params, fractal_colors);
                     ui.separator();
 
                     Self::navigation_section(ui, params);
                     ui.separator();
-
-                    // Deep zoom section (only for Mandelbrot)
-                    if let Some(dp) = deep_params {
-                        if params.get_fractal_type() == FractalType::Mandelbrot {
-                            Self::deep_zoom_section(ui, dp, has_compute);
-                            ui.separator();
-                        }
-                    }
 
                     Self::presets_section(ui, params);
                 });

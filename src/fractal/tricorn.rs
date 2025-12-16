@@ -5,26 +5,20 @@ pub fn presets() -> Vec<LocationPreset> {
     vec![
         LocationPreset {
             name: "Overview",
-            center: [-0.3, 0.0],
-            zoom: 0.8,
+            center: [0.0, 0.0],
+            zoom: 0.5,
             fractal_type: FractalType::Tricorn,
         },
         LocationPreset {
-            name: "Spiral Arms",
-            center: [-0.1, 0.87],
-            zoom: 50.0,
+            name: "Antenna",
+            center: [-1.1, 0.0],
+            zoom: 10.0,
             fractal_type: FractalType::Tricorn,
         },
         LocationPreset {
-            name: "Detail",
-            center: [-1.0, 0.3],
-            zoom: 100.0,
-            fractal_type: FractalType::Tricorn,
-        },
-        LocationPreset {
-            name: "Edge",
-            center: [0.3, 0.5],
-            zoom: 200.0,
+            name: "Spiral",
+            center: [0.25, 0.5],
+            zoom: 20.0,
             fractal_type: FractalType::Tricorn,
         },
     ]
@@ -36,13 +30,13 @@ pub fn julia_presets() -> Vec<LocationPreset> {
         LocationPreset {
             name: "Overview",
             center: [0.0, 0.0],
-            zoom: 0.8,
+            zoom: 0.5,
             fractal_type: FractalType::TricornJulia,
         },
         LocationPreset {
             name: "Detail",
-            center: [0.0, 0.5],
-            zoom: 10.0,
+            center: [0.3, 0.3],
+            zoom: 5.0,
             fractal_type: FractalType::TricornJulia,
         },
     ]

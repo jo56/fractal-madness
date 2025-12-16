@@ -5,20 +5,20 @@ pub fn mandelbrot_presets() -> Vec<LocationPreset> {
     vec![
         LocationPreset {
             name: "Overview",
-            center: [-0.5, 0.0],
-            zoom: 0.8,
-            fractal_type: FractalType::PerpendicularMandelbrot,
-        },
-        LocationPreset {
-            name: "Branch",
-            center: [-0.2, 0.8],
-            zoom: 50.0,
+            center: [0.0, 0.0],
+            zoom: 0.5,
             fractal_type: FractalType::PerpendicularMandelbrot,
         },
         LocationPreset {
             name: "Spike",
-            center: [-1.75, 0.0],
-            zoom: 100.0,
+            center: [-1.0, 0.0],
+            zoom: 15.0,
+            fractal_type: FractalType::PerpendicularMandelbrot,
+        },
+        LocationPreset {
+            name: "Branch",
+            center: [0.25, 0.45],
+            zoom: 25.0,
             fractal_type: FractalType::PerpendicularMandelbrot,
         },
     ]
@@ -29,20 +29,20 @@ pub fn burning_ship_presets() -> Vec<LocationPreset> {
     vec![
         LocationPreset {
             name: "Overview",
-            center: [-0.5, -0.5],
-            zoom: 0.8,
+            center: [0.0, 0.0],
+            zoom: 0.5,
             fractal_type: FractalType::PerpendicularBurningShip,
         },
         LocationPreset {
-            name: "Mast",
-            center: [-1.8, -0.02],
-            zoom: 50.0,
+            name: "Ship",
+            center: [-0.5, -0.5],
+            zoom: 10.0,
             fractal_type: FractalType::PerpendicularBurningShip,
         },
         LocationPreset {
             name: "Detail",
-            center: [-0.5, -0.9],
-            zoom: 100.0,
+            center: [-1.0, 0.0],
+            zoom: 20.0,
             fractal_type: FractalType::PerpendicularBurningShip,
         },
     ]
