@@ -166,8 +166,9 @@ impl UiState {
         };
 
         if params.max_iter > warning_threshold {
+            let (r, g, b) = crate::constants::ui::WARNING_COLOR;
             ui.colored_label(
-                egui::Color32::from_rgb(255, 180, 0),
+                egui::Color32::from_rgb(r, g, b),
                 "High iterations may reduce performance",
             );
         }

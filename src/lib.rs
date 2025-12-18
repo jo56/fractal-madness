@@ -1,20 +1,14 @@
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use winit::{
+    application::ApplicationHandler,
     dpi::PhysicalSize,
     event::{ElementState, MouseScrollDelta, WindowEvent},
-    event_loop::EventLoop,
-    window::Window,
+    event_loop::{ActiveEventLoop, EventLoop},
+    window::{Window, WindowId},
 };
 #[cfg(target_arch = "wasm32")]
-use winit::{
-    application::ApplicationHandler,
-    dpi::LogicalSize,
-    event_loop::ActiveEventLoop,
-    window::WindowId,
-};
-#[cfg(not(target_arch = "wasm32"))]
-use winit::event::Event;
+use winit::dpi::LogicalSize;
 
 mod color;
 mod constants;
@@ -168,6 +162,63 @@ impl ApplicationHandler for App {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+struct NativeApp {
+    window: Arc<Window>,
+    gpu: WebGpuState,
+    renderer: FractalRenderer,
+    ui: UiState,
+    input: InputState,
+    params: FractalParams,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl ApplicationHandler for NativeApp {
+    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
+        // Window already created, nothing to do
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        let consumed = self.ui.handle_window_event(&self.window, &event);
+
+        if !consumed && handle_input_event(&event, &mut self.input, &mut self.params, self.gpu.size) {
+            self.renderer.mark_dirty();
+        }
+
+        match event {
+            WindowEvent::CloseRequested => {
+                event_loop.exit();
+            }
+            WindowEvent::Resized(new_size) => {
+                self.gpu.resize(new_size.width, new_size.height);
+                self.renderer.resize(&self.gpu.device, new_size.width, new_size.height);
+            }
+            WindowEvent::RedrawRequested => {
+                // Update resolution for shader aspect ratio
+                self.params.resolution = [self.gpu.size.0 as f32, self.gpu.size.1 as f32];
+
+                let ui_changed = self.ui.prepare(&self.window, &mut self.params);
+                if ui_changed {
+                    self.renderer.mark_dirty();
+                }
+
+                render_frame(&self.gpu, &mut self.renderer, &mut self.ui, &self.params, &self.window);
+                self.window.request_redraw();
+            }
+            _ => {}
+        }
+    }
+
+    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        self.window.request_redraw();
+    }
+}
+
 #[wasm_bindgen(start)]
 pub fn start() {
     console_error_panic_hook::set_once();
@@ -282,43 +333,16 @@ async fn run_inner() -> Result<(), String> {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
+        let mut app = NativeApp {
+            window,
+            gpu,
+            renderer,
+            ui,
+            input,
+            params,
+        };
         event_loop
-            .run(move |event, target| {
-                match event {
-                    Event::WindowEvent { event, .. } => {
-                        let consumed = ui.handle_window_event(&window, &event);
-
-                        if !consumed && handle_input_event(&event, &mut input, &mut params, gpu.size) {
-                            renderer.mark_dirty();
-                        }
-
-                        match event {
-                            WindowEvent::CloseRequested => target.exit(),
-                            WindowEvent::Resized(new_size) => {
-                                gpu.resize(new_size.width, new_size.height);
-                                renderer.resize(&gpu.device, new_size.width, new_size.height);
-                            }
-                            WindowEvent::RedrawRequested => {
-                                // Update resolution for shader aspect ratio
-                                params.resolution = [gpu.size.0 as f32, gpu.size.1 as f32];
-
-                                let ui_changed = ui.prepare(&window, &mut params);
-                                if ui_changed {
-                                    renderer.mark_dirty();
-                                }
-
-                                render_frame(&gpu, &mut renderer, &mut ui, &params, &window);
-                                window.request_redraw();
-                            }
-                            _ => {}
-                        }
-                    }
-                    Event::AboutToWait => {
-                        window.request_redraw();
-                    }
-                    _ => {}
-                }
-            })
+            .run_app(&mut app)
             .map_err(|e| format!("Event loop error: {e}"))?;
     }
 

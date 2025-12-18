@@ -18,9 +18,10 @@ async function main() {
   } catch (error) {
     console.error("Failed to initialize fractal visualizer:", error);
     if (errorBanner) {
-      errorBanner.querySelector("h2")!.textContent = "Initialization Error";
-      errorBanner.querySelector("p")!.textContent =
-        `Failed to initialize the fractal visualizer: ${error}`;
+      const heading = errorBanner.querySelector("h2");
+      const paragraph = errorBanner.querySelector("p");
+      if (heading) heading.textContent = "Initialization Error";
+      if (paragraph) paragraph.textContent = `Failed to initialize the fractal visualizer: ${error}`;
       errorBanner.classList.remove("hidden");
     }
   }
