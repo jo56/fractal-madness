@@ -1,18 +1,4 @@
-use super::{FractalParams, FractalType, LocationPreset};
-
-/// Default Newton fractal parameters
-#[allow(dead_code)]
-pub fn default_params() -> FractalParams {
-    FractalParams {
-        center: [0.0, 0.0],
-        zoom: 0.8,
-        max_iter: 256,
-        power: 3.0,
-        escape_radius: 4.0,
-        fractal_type: FractalType::Newton as u32,
-        ..Default::default()
-    }
-}
+use super::{FractalType, LocationPreset};
 
 /// Interesting location presets for Newton fractal
 /// The Newton fractal shows basin boundaries for root-finding of z^n = 1

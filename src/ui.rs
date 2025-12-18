@@ -6,6 +6,7 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::color::ColorScheme;
+use crate::constants::ui as ui_const;
 use crate::fractal::{
     buffalo, burning_ship, celtic, julia, mandelbrot,
     newton, phoenix, tricorn, FractalParams, FractalType,
@@ -57,7 +58,7 @@ impl UiState {
             state,
             renderer,
             pending_frame: None,
-            panel_width: 280.0,
+            panel_width: ui_const::PANEL_WIDTH,
             fractal_colors: [
                 FractalType::Mandelbrot.default_color_scheme(),
                 FractalType::Julia.default_color_scheme(),
@@ -72,6 +73,7 @@ impl UiState {
         }
     }
 
+    #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
     pub fn get_panel_width(&self) -> f32 {
         self.panel_width
     }
@@ -332,7 +334,7 @@ impl UiState {
     fn build_ui(ctx: &Context, params: &mut FractalParams, fractal_colors: &mut [u32; 9]) -> f32 {
         let response = egui::SidePanel::left("controls")
             .resizable(true)
-            .default_width(280.0)
+            .default_width(ui_const::PANEL_WIDTH)
             .frame(egui::Frame::side_top_panel(&ctx.style()).inner_margin(8.0))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {

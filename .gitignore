@@ -2,7 +2,6 @@
 
 # Rust
 target/
-Cargo.lock
 
 # WASM build output
 pkg/

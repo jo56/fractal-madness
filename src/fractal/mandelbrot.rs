@@ -1,18 +1,4 @@
-use super::{FractalParams, FractalType, LocationPreset};
-
-/// Default Mandelbrot parameters
-#[allow(dead_code)]
-pub fn default_params() -> FractalParams {
-    FractalParams {
-        center: [-0.5, 0.0],
-        zoom: 1.0,
-        max_iter: 256,
-        power: 2.0,
-        escape_radius: 4.0,
-        fractal_type: FractalType::Mandelbrot as u32,
-        ..Default::default()
-    }
-}
+use super::{FractalType, LocationPreset};
 
 /// Interesting location presets for Mandelbrot
 /// Note: Coordinates are limited to 4-5 decimal places to match f32 precision.

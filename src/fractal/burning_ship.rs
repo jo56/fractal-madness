@@ -1,18 +1,4 @@
-use super::{FractalParams, FractalType, LocationPreset};
-
-/// Default Burning Ship parameters
-#[allow(dead_code)]
-pub fn default_params() -> FractalParams {
-    FractalParams {
-        center: [-0.4, -0.6],
-        zoom: 0.6,
-        max_iter: 256,
-        power: 2.0,
-        escape_radius: 4.0,
-        fractal_type: FractalType::BurningShip as u32,
-        ..Default::default()
-    }
-}
+use super::{FractalType, LocationPreset};
 
 /// Interesting location presets for Burning Ship
 pub fn presets() -> Vec<LocationPreset> {
