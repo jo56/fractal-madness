@@ -182,12 +182,16 @@ impl UiState {
     }
 
     fn julia_section(ui: &mut Ui, params: &mut FractalParams) {
-        ui.label("Julia Constant");
+        // Show appropriate label based on fractal type
+        let label = if params.get_fractal_type() == FractalType::Phoenix {
+            "Phoenix Parameters"
+        } else {
+            "Julia Constant"
+        };
+        ui.label(label);
 
-        // C real part
+        // Parameter sliders
         ui.add(Slider::new(&mut params.julia_c[0], -2.0..=2.0).text("Real"));
-
-        // C imaginary part
         ui.add(Slider::new(&mut params.julia_c[1], -2.0..=2.0).text("Imaginary"));
     }
 

@@ -66,6 +66,7 @@ impl FractalType {
             FractalType::Julia
                 | FractalType::BuffaloJulia
                 | FractalType::CelticJulia
+                | FractalType::Phoenix
         )
     }
 
@@ -238,7 +239,8 @@ impl FractalParams {
             }
             FractalType::Phoenix => {
                 self.center = [0.0, 0.0];
-                self.zoom = 0.5;
+                self.zoom = 1.2;
+                self.julia_c = [0.5667, -0.5]; // Classic Phoenix parameters
             }
         }
     }

@@ -285,15 +285,12 @@ fn iterate_newton(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -
 
 // Phoenix fractal: z_new = z^2 + c + p * z_prev
 // Uses previous iteration value for flowing feather-like patterns
-fn iterate_phoenix(c: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
+// p parameter controls the shape (classic: p = (0.5667, -0.5))
+fn iterate_phoenix(c: vec2<f32>, p: vec2<f32>, power: f32, max_iter: u32, escape_radius: f32) -> vec2<f32> {
     var z = vec2<f32>(0.0, 0.0);
     var z_prev = vec2<f32>(0.0, 0.0);
     var i: u32 = 0u;
     let escape2 = escape_radius * escape_radius;
-
-    // Phoenix parameter p (stored in power, typical values: -0.5 to 0.5)
-    // Using a fixed interesting value for the Mandelbrot-style iteration
-    let p = vec2<f32>(0.5667, -0.5);  // Classic phoenix parameter
 
     while (i < max_iter && dot(z, z) < escape2) {
         let z_new = cmul(z, z) + c + cmul(p, z_prev);
@@ -628,7 +625,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
             result = iterate_newton(c, params.power, params.max_iter, params.escape_radius);
         }
         case FRACTAL_PHOENIX: {
-            result = iterate_phoenix(c, params.power, params.max_iter, params.escape_radius);
+            result = iterate_phoenix(c, params.julia_c, params.power, params.max_iter, params.escape_radius);
         }
         default: {
             result = iterate_mandelbrot(c, params.power, params.max_iter, params.escape_radius);

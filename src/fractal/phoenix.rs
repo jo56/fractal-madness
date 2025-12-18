@@ -5,52 +5,66 @@ use super::{FractalParams, FractalType, LocationPreset};
 pub fn default_params() -> FractalParams {
     FractalParams {
         center: [0.0, 0.0],
-        zoom: 0.5,
+        zoom: 1.2,
         max_iter: 256,
         power: 2.0,
         escape_radius: 4.0,
         fractal_type: FractalType::Phoenix as u32,
+        julia_c: [0.5667, -0.5], // Classic Phoenix parameters
         ..Default::default()
     }
 }
 
-/// Interesting location presets for Phoenix fractal
-/// The Phoenix fractal uses z_new = z^2 + c + p*z_prev with c=0.5667, p=-0.5
-/// The set is bounded within approximately ±1.35
-/// IMPORTANT: Detail is at the SET BOUNDARY, not inside or outside (both are solid)
+/// Phoenix fractal presets with different parameter variations
+/// The Phoenix fractal uses z_new = z^2 + c + p*z_prev
+/// Different p values (stored in julia_c) produce entirely different shapes
+/// When p=0, it reduces to standard Mandelbrot
 pub fn presets() -> Vec<LocationPreset> {
     vec![
+        // Classic Ushiki Phoenix
         LocationPreset {
-            name: "Overview",
+            name: "Classic",
+            center: [0.0, 0.0],
+            zoom: 1.2,
+            fractal_type: FractalType::Phoenix,
+            power: Some(2.0),
+            julia_c: Some([0.5667, -0.5]),
+        },
+        // Negative real p - creates inverted/mirrored structures
+        LocationPreset {
+            name: "Inverted",
             center: [0.0, 0.0],
             zoom: 0.8,
             fractal_type: FractalType::Phoenix,
             power: Some(2.0),
-            julia_c: None,
+            julia_c: Some([-0.5, -0.5]),
         },
+        // Pure imaginary p - creates rotational effects
         LocationPreset {
-            name: "Wing Edge",
-            center: [0.5, 0.5],
-            zoom: 3.0,
+            name: "Vortex",
+            center: [0.0, 0.0],
+            zoom: 1.0,
             fractal_type: FractalType::Phoenix,
             power: Some(2.0),
-            julia_c: None,
+            julia_c: Some([0.0, 0.8]),
         },
+        // Large positive p - dramatic expansion
         LocationPreset {
-            name: "Tail",
-            center: [0.0, -0.9],
-            zoom: 4.0,
+            name: "Explosion",
+            center: [0.0, 0.0],
+            zoom: 0.6,
             fractal_type: FractalType::Phoenix,
             power: Some(2.0),
-            julia_c: None,
+            julia_c: Some([0.8, 0.0]),
         },
+        // Small p near zero - closer to Mandelbrot
         LocationPreset {
-            name: "Inner Curl",
-            center: [-0.15, 0.2],
-            zoom: 10.0,
+            name: "Subtle",
+            center: [-0.5, 0.0],
+            zoom: 1.0,
             fractal_type: FractalType::Phoenix,
             power: Some(2.0),
-            julia_c: None,
+            julia_c: Some([0.1, -0.1]),
         },
     ]
 }
