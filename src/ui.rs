@@ -114,7 +114,7 @@ impl UiState {
             screen_descriptor,
         });
 
-        !params_equal(&params_before, params)
+        params_before != *params
     }
 
     fn fractal_type_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 9]) {
@@ -149,7 +149,7 @@ impl UiState {
         // Iterations (increased to 10000)
         let mut max_iter = params.max_iter as f32;
         ui.add(
-            Slider::new(&mut max_iter, 10.0..=10000.0)
+            Slider::new(&mut max_iter, ui_const::MIN_ITERATIONS..=ui_const::MAX_ITERATIONS)
                 .logarithmic(true)
                 .text("Iterations"),
         );
@@ -362,16 +362,4 @@ impl UiState {
             });
         response.response.rect.width()
     }
-}
-
-fn params_equal(a: &FractalParams, b: &FractalParams) -> bool {
-    a.center == b.center
-        && a.zoom == b.zoom
-        && a.max_iter == b.max_iter
-        && a.power == b.power
-        && a.escape_radius == b.escape_radius
-        && a.fractal_type == b.fractal_type
-        && a.color_scheme == b.color_scheme
-        && a.julia_c == b.julia_c
-        && a.flags == b.flags
 }

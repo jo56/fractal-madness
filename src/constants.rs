@@ -15,6 +15,10 @@ pub mod canvas {
 pub mod ui {
     /// Default side panel width in logical pixels
     pub const PANEL_WIDTH: f32 = 280.0;
+    /// Minimum iteration count for the slider
+    pub const MIN_ITERATIONS: f32 = 10.0;
+    /// Maximum iteration count for the slider
+    pub const MAX_ITERATIONS: f32 = 10000.0;
 }
 
 /// HTML element IDs for WASM integration

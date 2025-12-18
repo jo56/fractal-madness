@@ -64,6 +64,40 @@ fn handle_input_event(
     }
 }
 
+/// Render a single frame to the screen
+fn render_frame(
+    gpu: &WebGpuState,
+    renderer: &mut FractalRenderer,
+    ui: &mut UiState,
+    params: &FractalParams,
+    window: &Window,
+) {
+    let Ok(output) = gpu.surface.get_current_texture() else { return };
+    let view = output.texture.create_view(&Default::default());
+    let mut encoder = gpu.device.create_command_encoder(&Default::default());
+
+    renderer.render(
+        &gpu.device,
+        &gpu.queue,
+        &mut encoder,
+        &view,
+        params,
+        gpu.size,
+    );
+
+    ui.render(
+        &gpu.device,
+        &gpu.queue,
+        &mut encoder,
+        &view,
+        window,
+        gpu.format,
+    );
+
+    gpu.queue.submit(std::iter::once(encoder.finish()));
+    output.present();
+}
+
 #[cfg(target_arch = "wasm32")]
 struct App {
     window: Arc<Window>,
@@ -121,32 +155,7 @@ impl ApplicationHandler for App {
                 self.params.ui_offset = -panel_proportion * aspect;
                 self.params.ui_offset_y = 0.0;
 
-                if let Ok(output) = self.gpu.surface.get_current_texture() {
-                    let view = output.texture.create_view(&Default::default());
-                    let mut encoder = self.gpu.device.create_command_encoder(&Default::default());
-
-                    self.renderer.render(
-                        &self.gpu.device,
-                        &self.gpu.queue,
-                        &mut encoder,
-                        &view,
-                        &self.params,
-                        self.gpu.size,
-                    );
-
-                    self.ui.render(
-                        &self.gpu.device,
-                        &self.gpu.queue,
-                        &mut encoder,
-                        &view,
-                        &self.window,
-                        self.gpu.format,
-                    );
-
-                    self.gpu.queue.submit(std::iter::once(encoder.finish()));
-                    output.present();
-                }
-
+                render_frame(&self.gpu, &mut self.renderer, &mut self.ui, &self.params, &self.window);
                 self.window.request_redraw();
             }
             _ => {}
@@ -298,32 +307,7 @@ async fn run_inner() -> Result<(), String> {
                                     renderer.mark_dirty();
                                 }
 
-                                if let Ok(output) = gpu.surface.get_current_texture() {
-                                    let view = output.texture.create_view(&Default::default());
-                                    let mut encoder = gpu.device.create_command_encoder(&Default::default());
-
-                                    renderer.render(
-                                        &gpu.device,
-                                        &gpu.queue,
-                                        &mut encoder,
-                                        &view,
-                                        &params,
-                                        gpu.size,
-                                    );
-
-                                    ui.render(
-                                        &gpu.device,
-                                        &gpu.queue,
-                                        &mut encoder,
-                                        &view,
-                                        &window,
-                                        gpu.format,
-                                    );
-
-                                    gpu.queue.submit(std::iter::once(encoder.finish()));
-                                    output.present();
-                                }
-
+                                render_frame(&gpu, &mut renderer, &mut ui, &params, &window);
                                 window.request_redraw();
                             }
                             _ => {}
