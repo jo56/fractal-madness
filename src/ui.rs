@@ -6,7 +6,6 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::color::ColorScheme;
-use crate::fractal::julia::julia_presets;
 use crate::fractal::{
     buffalo, burning_ship, celtic, julia, mandelbrot,
     newton, phoenix, tricorn, FractalParams, FractalType,
@@ -190,21 +189,6 @@ impl UiState {
 
         // C imaginary part
         ui.add(Slider::new(&mut params.julia_c[1], -2.0..=2.0).text("Imaginary"));
-
-        ui.label("Julia Presets:");
-        egui::Grid::new("julia_presets_grid")
-            .num_columns(2)
-            .show(ui, |ui| {
-                let presets = julia_presets();
-                for (i, preset) in presets.iter().enumerate() {
-                    if ui.button(preset.name).clicked() {
-                        params.julia_c = preset.c;
-                    }
-                    if (i + 1) % 2 == 0 {
-                        ui.end_row();
-                    }
-                }
-            });
     }
 
     fn color_section(ui: &mut Ui, params: &mut FractalParams, fractal_colors: &mut [u32; 9]) {

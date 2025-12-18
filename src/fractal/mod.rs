@@ -252,6 +252,7 @@ pub struct LocationPreset {
     pub zoom: f32,
     pub fractal_type: FractalType,
     pub power: Option<f32>,
+    pub julia_c: Option<[f32; 2]>,
 }
 
 impl LocationPreset {
@@ -261,6 +262,9 @@ impl LocationPreset {
         params.set_fractal_type(self.fractal_type);
         if let Some(p) = self.power {
             params.power = p;
+        }
+        if let Some(c) = self.julia_c {
+            params.julia_c = c;
         }
     }
 }

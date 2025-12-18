@@ -1,38 +1,81 @@
 use super::{FractalType, LocationPreset};
 
-/// Presets for Buffalo Julia
+/// Presets for Buffalo Julia (includes Julia constant variations)
 pub fn julia_presets() -> Vec<LocationPreset> {
     vec![
+        // Julia constant presets
         LocationPreset {
-            name: "Overview",
+            name: "Classic",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::BuffaloJulia, power: Some(2.0),
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(2.0),
+            julia_c: Some([-0.7, 0.27015]),
         },
         LocationPreset {
-            name: "Detail",
-            center: [0.25, 0.25],
-            zoom: 5.0,
-            fractal_type: FractalType::BuffaloJulia, power: Some(2.0),
+            name: "Dragon",
+            center: [0.0, 0.0],
+            zoom: 0.5,
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(2.0),
+            julia_c: Some([-0.8, 0.156]),
+        },
+        LocationPreset {
+            name: "San Marco",
+            center: [0.0, 0.0],
+            zoom: 0.5,
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(2.0),
+            julia_c: Some([-0.75, 0.0]),
+        },
+        LocationPreset {
+            name: "Siegel Disk",
+            center: [0.0, 0.0],
+            zoom: 0.5,
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(2.0),
+            julia_c: Some([-0.391, -0.587]),
+        },
+        LocationPreset {
+            name: "Spiral",
+            center: [0.0, 0.0],
+            zoom: 0.5,
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(2.0),
+            julia_c: Some([-0.4, 0.6]),
+        },
+        LocationPreset {
+            name: "Snowflake",
+            center: [0.0, 0.0],
+            zoom: 0.5,
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(2.0),
+            julia_c: Some([0.285, 0.01]),
         },
         // Higher power variants
         LocationPreset {
             name: "Cubic (z³)",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::BuffaloJulia, power: Some(3.0),
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(3.0),
+            julia_c: None,
         },
         LocationPreset {
             name: "Quartic (z⁴)",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::BuffaloJulia, power: Some(4.0),
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(4.0),
+            julia_c: None,
         },
         LocationPreset {
             name: "Quintic (z⁵)",
             center: [0.0, 0.0],
             zoom: 0.5,
-            fractal_type: FractalType::BuffaloJulia, power: Some(5.0),
+            fractal_type: FractalType::BuffaloJulia,
+            power: Some(5.0),
+            julia_c: None,
         },
     ]
 }
