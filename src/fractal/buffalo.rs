@@ -59,7 +59,7 @@ pub fn julia_presets() -> Vec<LocationPreset> {
             zoom: 0.5,
             fractal_type: FractalType::BuffaloJulia,
             power: Some(3.0),
-            julia_c: None,
+            julia_c: Some([-0.7, 0.27015]),
         },
         LocationPreset {
             name: "Quartic (z⁴)",
@@ -67,7 +67,7 @@ pub fn julia_presets() -> Vec<LocationPreset> {
             zoom: 0.5,
             fractal_type: FractalType::BuffaloJulia,
             power: Some(4.0),
-            julia_c: None,
+            julia_c: Some([-0.7, 0.27015]),
         },
         LocationPreset {
             name: "Quintic (z⁵)",
@@ -75,7 +75,7 @@ pub fn julia_presets() -> Vec<LocationPreset> {
             zoom: 0.5,
             fractal_type: FractalType::BuffaloJulia,
             power: Some(5.0),
-            julia_c: None,
+            julia_c: Some([-0.7, 0.27015]),
         },
     ]
 }
