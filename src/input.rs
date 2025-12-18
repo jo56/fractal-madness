@@ -37,12 +37,6 @@ impl InputState {
         }
         None
     }
-
-    /// Check if currently dragging
-    #[allow(dead_code)]
-    pub fn is_dragging(&self) -> bool {
-        self.dragging
-    }
 }
 
 impl Default for InputState {

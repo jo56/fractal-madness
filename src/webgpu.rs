@@ -12,14 +12,11 @@ pub struct WebGpuState {
     pub config: SurfaceConfiguration,
     pub format: TextureFormat,
     pub size: (u32, u32),
-    #[allow(dead_code)]
-    pub scale_factor: f64,
 }
 
 impl WebGpuState {
     pub async fn new(window: Arc<Window>) -> Result<Self, String> {
         let size = window.inner_size();
-        let scale_factor = window.scale_factor();
 
         // Try WebGPU first, fall back to WebGL
         #[cfg(target_arch = "wasm32")]
@@ -107,7 +104,6 @@ impl WebGpuState {
             config,
             format,
             size: (width, height),
-            scale_factor,
         })
     }
 

@@ -1,16 +1,23 @@
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use winit::{
-    application::ApplicationHandler,
-    dpi::{LogicalSize, PhysicalSize},
+    dpi::PhysicalSize,
     event::{ElementState, MouseScrollDelta, WindowEvent},
-    event_loop::{ActiveEventLoop, EventLoop},
-    window::{Window, WindowId},
+    event_loop::EventLoop,
+    window::Window,
+};
+#[cfg(target_arch = "wasm32")]
+use winit::{
+    application::ApplicationHandler,
+    dpi::LogicalSize,
+    event_loop::ActiveEventLoop,
+    window::WindowId,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use winit::event::Event;
 
 mod color;
+mod constants;
 mod fractal;
 mod input;
 mod renderer;
@@ -22,6 +29,40 @@ use crate::input::InputState;
 use crate::renderer::FractalRenderer;
 use crate::ui::UiState;
 use crate::webgpu::WebGpuState;
+
+/// Handle input events that affect fractal parameters
+/// Returns true if the renderer should be marked dirty
+fn handle_input_event(
+    event: &WindowEvent,
+    input: &mut InputState,
+    params: &mut FractalParams,
+    gpu_size: (u32, u32),
+) -> bool {
+    match event {
+        WindowEvent::MouseInput { state: btn_state, button, .. } => {
+            input.handle_mouse_button(*button, *btn_state == ElementState::Pressed);
+            false
+        }
+        WindowEvent::CursorMoved { position, .. } => {
+            if let Some(delta) = input.handle_cursor_move(position.x as f32, position.y as f32) {
+                let (width, height) = gpu_size;
+                params.pan(delta.0, delta.1, width as f32, height as f32);
+                true
+            } else {
+                false
+            }
+        }
+        WindowEvent::MouseWheel { delta, .. } => {
+            let scroll = match delta {
+                MouseScrollDelta::LineDelta(_, y) => *y,
+                MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
+            };
+            params.zoom_by(scroll * 0.1);
+            true
+        }
+        _ => false,
+    }
+}
 
 #[cfg(target_arch = "wasm32")]
 struct App {
@@ -47,28 +88,8 @@ impl ApplicationHandler for App {
     ) {
         let consumed = self.ui.handle_window_event(&self.window, &event);
 
-        if !consumed {
-            match &event {
-                WindowEvent::MouseInput { state: btn_state, button, .. } => {
-                    self.input.handle_mouse_button(*button, *btn_state == ElementState::Pressed);
-                }
-                WindowEvent::CursorMoved { position, .. } => {
-                    if let Some(delta) = self.input.handle_cursor_move(position.x as f32, position.y as f32) {
-                        let (width, height) = self.gpu.size;
-                        self.params.pan(delta.0, delta.1, width as f32, height as f32);
-                        self.renderer.mark_dirty();
-                    }
-                }
-                WindowEvent::MouseWheel { delta, .. } => {
-                    let scroll = match delta {
-                        MouseScrollDelta::LineDelta(_, y) => *y,
-                        MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
-                    };
-                    self.params.zoom_by(scroll * 0.1);
-                    self.renderer.mark_dirty();
-                }
-                _ => {}
-            }
+        if !consumed && handle_input_event(&event, &mut self.input, &mut self.params, self.gpu.size) {
+            self.renderer.mark_dirty();
         }
 
         match event {
@@ -149,15 +170,18 @@ pub fn start() {
 pub async fn run() {
     if let Err(e) = run_inner().await {
         log::error!("Application error: {}", e);
+        #[cfg(target_arch = "wasm32")]
         show_error(&e);
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 fn show_error(msg: &str) {
     use wasm_bindgen::JsCast;
+    use crate::constants::html;
     if let Some(window) = web_sys::window() {
         if let Some(document) = window.document() {
-            if let Some(banner) = document.get_element_by_id("error-banner") {
+            if let Some(banner) = document.get_element_by_id(html::ERROR_BANNER_ID) {
                 if let Some(title) = banner.query_selector("h2").ok().flatten() {
                     title.set_text_content(Some("Error"));
                 }
@@ -179,17 +203,18 @@ async fn run_inner() -> Result<(), String> {
     let window = {
         use wasm_bindgen::JsCast;
         use winit::platform::web::WindowAttributesExtWebSys;
+        use crate::constants::{canvas, html};
 
-        let canvas = web_sys::window()
+        let canvas_el = web_sys::window()
             .and_then(|win| win.document())
-            .and_then(|doc| doc.get_element_by_id("screen"))
+            .and_then(|doc| doc.get_element_by_id(html::CANVAS_ID))
             .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
             .ok_or("Failed to find canvas element")?;
 
         let window_attrs = Window::default_attributes()
             .with_title("Fractal Madness")
-            .with_inner_size(PhysicalSize::new(1280, 1400))
-            .with_canvas(Some(canvas.clone()));
+            .with_inner_size(PhysicalSize::new(canvas::DEFAULT_WIDTH, canvas::WASM_WINDOW_HEIGHT))
+            .with_canvas(Some(canvas_el.clone()));
 
         #[allow(deprecated)]
         let window = Arc::new(
@@ -198,16 +223,17 @@ async fn run_inner() -> Result<(), String> {
                 .map_err(|e| format!("Failed to create window: {e}"))?,
         );
 
-        resize_canvas_to_window(&canvas, &window);
+        resize_canvas_to_window(&canvas_el, &window);
 
         window
     };
 
     #[cfg(not(target_arch = "wasm32"))]
     let window = {
+        use crate::constants::canvas;
         let window_attrs = Window::default_attributes()
             .with_title("Fractal Madness")
-            .with_inner_size(PhysicalSize::new(1280, 1400));
+            .with_inner_size(PhysicalSize::new(canvas::DEFAULT_WIDTH, canvas::WASM_WINDOW_HEIGHT));
 
         #[allow(deprecated)]
         Arc::new(
@@ -253,28 +279,8 @@ async fn run_inner() -> Result<(), String> {
                     Event::WindowEvent { event, .. } => {
                         let consumed = ui.handle_window_event(&window, &event);
 
-                        if !consumed {
-                            match &event {
-                                WindowEvent::MouseInput { state: btn_state, button, .. } => {
-                                    input.handle_mouse_button(*button, *btn_state == ElementState::Pressed);
-                                }
-                                WindowEvent::CursorMoved { position, .. } => {
-                                    if let Some(delta) = input.handle_cursor_move(position.x as f32, position.y as f32) {
-                                        let (width, height) = gpu.size;
-                                        params.pan(delta.0, delta.1, width as f32, height as f32);
-                                        renderer.mark_dirty();
-                                    }
-                                }
-                                WindowEvent::MouseWheel { delta, .. } => {
-                                    let scroll = match delta {
-                                        MouseScrollDelta::LineDelta(_, y) => *y,
-                                        MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
-                                    };
-                                    params.zoom_by(scroll * 0.1);
-                                    renderer.mark_dirty();
-                                }
-                                _ => {}
-                            }
+                        if !consumed && handle_input_event(&event, &mut input, &mut params, gpu.size) {
+                            renderer.mark_dirty();
                         }
 
                         match event {
@@ -335,73 +341,78 @@ async fn run_inner() -> Result<(), String> {
     Ok(())
 }
 
+/// Calculate canvas dimensions based on parent element size
 #[cfg(target_arch = "wasm32")]
-fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::window::Window) {
+fn calculate_canvas_dimensions(canvas: &web_sys::HtmlCanvasElement) -> (f64, f64, u32, u32) {
+    use crate::constants::{canvas as canvas_const, FRAME_BORDER_ADJUSTMENT};
+
     let dpr = web_sys::window()
         .map(|w| w.device_pixel_ratio())
         .unwrap_or(1.0);
 
-    // Subtract frame size: 8px each side for gray border
+    let default_size = (
+        canvas_const::DEFAULT_WIDTH as f64,
+        canvas_const::DEFAULT_HEIGHT as f64,
+    );
+
+    // Subtract frame size for gray border
     let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
-        let w = (parent.client_width() as f64) - 16.0;
-        let h = (parent.client_height() as f64) - 16.0;
+        let w = (parent.client_width() as f64) - FRAME_BORDER_ADJUSTMENT;
+        let h = (parent.client_height() as f64) - FRAME_BORDER_ADJUSTMENT;
         if w > 0.0 && h > 0.0 {
             (w, h)
         } else {
-            (1280.0, 800.0)
+            default_size
         }
     } else {
-        (1280.0, 800.0)
+        default_size
     };
 
     let width = (logical_width * dpr).round().max(1.0) as u32;
     let height = (logical_height * dpr).round().max(1.0) as u32;
 
+    (logical_width, logical_height, width, height)
+}
+
+/// Apply canvas size to both the canvas element and window
+#[cfg(target_arch = "wasm32")]
+fn apply_canvas_size(
+    canvas: &web_sys::HtmlCanvasElement,
+    window: &winit::window::Window,
+    logical_width: f64,
+    logical_height: f64,
+    width: u32,
+    height: u32,
+) {
     canvas.set_width(width);
     canvas.set_height(height);
-
     let logical_size = LogicalSize::new(logical_width, logical_height);
     let _ = window.request_inner_size(logical_size);
 }
 
 #[cfg(target_arch = "wasm32")]
+fn resize_canvas_to_window(canvas: &web_sys::HtmlCanvasElement, window: &winit::window::Window) {
+    let (logical_width, logical_height, width, height) = calculate_canvas_dimensions(canvas);
+    apply_canvas_size(canvas, window, logical_width, logical_height, width, height);
+}
+
+#[cfg(target_arch = "wasm32")]
 fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
     use wasm_bindgen::JsCast;
+    use crate::constants::html;
 
     let Some(canvas) = web_sys::window()
         .and_then(|win| win.document())
-        .and_then(|doc| doc.get_element_by_id("screen"))
+        .and_then(|doc| doc.get_element_by_id(html::CANVAS_ID))
         .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
     else {
         return;
     };
 
-    let dpr = web_sys::window()
-        .map(|w| w.device_pixel_ratio())
-        .unwrap_or(1.0);
-
-    // Subtract frame size: 8px each side for gray border
-    let (logical_width, logical_height) = if let Some(parent) = canvas.parent_element() {
-        let w = (parent.client_width() as f64) - 16.0;
-        let h = (parent.client_height() as f64) - 16.0;
-        if w > 0.0 && h > 0.0 {
-            (w, h)
-        } else {
-            (1280.0, 800.0)
-        }
-    } else {
-        (1280.0, 800.0)
-    };
-
-    let width = (logical_width * dpr).round().max(1.0) as u32;
-    let height = (logical_height * dpr).round().max(1.0) as u32;
+    let (logical_width, logical_height, width, height) = calculate_canvas_dimensions(&canvas);
 
     if (width, height) != gpu.size {
-        canvas.set_width(width);
-        canvas.set_height(height);
-
-        let logical_size = LogicalSize::new(logical_width, logical_height);
-        let _ = window.request_inner_size(logical_size);
+        apply_canvas_size(&canvas, window, logical_width, logical_height, width, height);
         gpu.resize(width, height);
     }
 }

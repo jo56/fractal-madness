@@ -1,4 +1,5 @@
 use bytemuck::{Pod, Zeroable};
+use crate::constants::canvas;
 
 pub mod burning_ship;
 pub mod buffalo;
@@ -120,7 +121,7 @@ impl Default for FractalParams {
             julia_c: [-0.7, 0.27015],
             flags: 1, // smooth coloring on by default
             _pad: 0,
-            resolution: [1280.0, 1400.0], // default, will be updated each frame
+            resolution: [canvas::DEFAULT_WIDTH as f32, canvas::WASM_WINDOW_HEIGHT as f32], // default, will be updated each frame
             ui_offset: 0.0,              // will be updated each frame based on UI panel width
             ui_offset_y: 0.0,            // will be updated each frame for vertical centering
         }

@@ -1,19 +1,4 @@
-use super::{FractalParams, FractalType, LocationPreset};
-
-/// Default Julia parameters
-#[allow(dead_code)]
-pub fn default_params() -> FractalParams {
-    FractalParams {
-        center: [0.0, 0.0],
-        zoom: 0.8,
-        max_iter: 256,
-        power: 2.0,
-        escape_radius: 4.0,
-        fractal_type: FractalType::Julia as u32,
-        julia_c: [-0.7, 0.27015],
-        ..Default::default()
-    }
-}
+use super::{FractalType, LocationPreset};
 
 /// Location presets for Julia (includes Julia constant variations)
 pub fn presets() -> Vec<LocationPreset> {
