@@ -91,7 +91,7 @@ impl FractalType {
 /// Must match the WGSL struct layout exactly and stay 16-byte aligned for uniforms
 /// Total size: 64 bytes
 #[repr(C, align(16))]
-#[derive(Debug, Clone, Copy, Pod, Zeroable)]
+#[derive(Debug, Clone, Copy, PartialEq, Pod, Zeroable)]
 pub struct FractalParams {
     pub center: [f32; 2],       // offset 0  (8 bytes)
     pub zoom: f32,               // offset 8  (4 bytes)
