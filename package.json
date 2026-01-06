@@ -4,18 +4,17 @@
   "description": "WebGPU-accelerated fractal visualizer",
   "type": "module",
   "scripts": {
-    "wasm:install": "curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh",
     "wasm:dev": "wasm-pack build --release --target web --out-dir pkg",
     "wasm:release": "wasm-pack build --release --target web --out-dir pkg",
     "dev": "npm run wasm:dev && vite dev",
-    "build": "npm run wasm:install && npm run wasm:release && vite build",
-    "build:local": "npm run wasm:release && vite build",
+    "build": "npm run wasm:release && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
     "vite": "^7.3.0",
     "vite-plugin-top-level-await": "^1.4.4",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-wasm": "^3.3.0",
+    "wasm-pack": "^0.13.1"
   }
 }
