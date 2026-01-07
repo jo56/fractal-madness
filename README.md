@@ -1,5 +1,13 @@
 # Fractal Madness
 
+<div align="center">
+          <a href="https://fractal-madness.pages.dev/" target="_blank">
+          <img src="assets/fractal-madness-preview.png" alt="fractal madness preview">
+          </a>
+      <br>
+  </div>
+<br>
+
 A GPU-accelerated fractal visualizer built with Rust and WebGPU, compiled to WebAssembly for browser deployment.
 
 ## Features
