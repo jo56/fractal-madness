@@ -552,7 +552,7 @@ dependencies = [
 
 [[package]]
 name = "fractal-madness"
-version = "0.0.2"
+version = "0.0.4"
 dependencies = [
  "bytemuck",
  "console_error_panic_hook",

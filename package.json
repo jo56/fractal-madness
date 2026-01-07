@@ -1,6 +1,6 @@
 {
   "name": "fractal-madness",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "WebGPU-accelerated fractal visualizer",
   "type": "module",
   "scripts": {
