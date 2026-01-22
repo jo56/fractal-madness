@@ -6,7 +6,7 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::color::ColorScheme;
-use crate::constants::ui as ui_const;
+use crate::constants::{performance, ui as ui_const};
 use crate::fractal::{
     buffalo, burning_ship, celtic, julia, mandelbrot,
     newton, phoenix, tricorn, FractalParams, FractalType,
@@ -129,13 +129,15 @@ impl UiState {
                     if ui.selectable_label(selected, ft.name()).clicked() {
                         // Save current color for current fractal
                         let old_type = params.fractal_type as usize;
-                        fractal_colors[old_type] = params.color_scheme;
+                        if let Some(color) = fractal_colors.get_mut(old_type) {
+                            *color = params.color_scheme;
+                        }
 
                         // Switch fractal type
                         params.set_fractal_type(*ft);
 
                         // Load saved color for new fractal
-                        params.color_scheme = fractal_colors[*ft as usize];
+                        params.color_scheme = fractal_colors.get(*ft as usize).copied().unwrap_or(0);
 
                         params.reset();
                     }
@@ -157,12 +159,12 @@ impl UiState {
 
         // Fractal-specific performance warning thresholds
         let warning_threshold = match params.get_fractal_type() {
-            FractalType::Newton => 140,      // 3.5x cost
-            FractalType::Phoenix => 330,     // 1.5x cost
-            FractalType::BuffaloJulia | FractalType::CelticJulia => 400,  // 1.2x cost
-            FractalType::Celtic => 430,      // 1.15x cost
-            FractalType::Tricorn | FractalType::BurningShip => 450,  // 1.1x cost
-            _ => 500,  // Mandelbrot, Julia (baseline)
+            FractalType::Newton => performance::NEWTON_WARNING_THRESHOLD,
+            FractalType::Phoenix => performance::PHOENIX_WARNING_THRESHOLD,
+            FractalType::BuffaloJulia | FractalType::CelticJulia => performance::JULIA_VARIANT_WARNING_THRESHOLD,
+            FractalType::Celtic => performance::CELTIC_WARNING_THRESHOLD,
+            FractalType::Tricorn | FractalType::BurningShip => performance::ESCAPE_VARIANT_WARNING_THRESHOLD,
+            _ => performance::BASELINE_WARNING_THRESHOLD,
         };
 
         if params.max_iter > warning_threshold {
@@ -210,7 +212,9 @@ impl UiState {
                     if ui.selectable_label(selected, cs.name()).clicked() {
                         params.color_scheme = *cs as u32;
                         // Save color for current fractal type
-                        fractal_colors[params.fractal_type as usize] = params.color_scheme;
+                        if let Some(color) = fractal_colors.get_mut(params.fractal_type as usize) {
+                            *color = params.color_scheme;
+                        }
                     }
                 }
             });

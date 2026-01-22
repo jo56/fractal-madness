@@ -76,8 +76,9 @@ impl WebGpuState {
             .formats
             .iter()
             .find(|f| f.is_srgb())
+            .or_else(|| caps.formats.first())
             .copied()
-            .unwrap_or(caps.formats[0]);
+            .ok_or_else(|| "No surface formats available".to_string())?;
 
         log::info!("Surface format: {:?}", format);
 
@@ -92,7 +93,7 @@ impl WebGpuState {
             height,
             present_mode: PresentMode::AutoVsync,
             desired_maximum_frame_latency: 2,
-            alpha_mode: caps.alpha_modes[0],
+            alpha_mode: caps.alpha_modes.first().copied().unwrap_or(wgpu::CompositeAlphaMode::Auto),
             view_formats: vec![],
         };
         surface.configure(&device, &config);

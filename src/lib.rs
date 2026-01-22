@@ -49,9 +49,9 @@ fn handle_input_event(
         WindowEvent::MouseWheel { delta, .. } => {
             let scroll = match delta {
                 MouseScrollDelta::LineDelta(_, y) => *y,
-                MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
+                MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / constants::input::SCROLL_PIXEL_DIVISOR,
             };
-            params.zoom_by(scroll * 0.1);
+            params.zoom_by(scroll * constants::input::ZOOM_SCROLL_MULTIPLIER);
             true
         }
         _ => false,
@@ -222,7 +222,7 @@ impl ApplicationHandler for NativeApp {
 #[wasm_bindgen(start)]
 pub fn start() {
     console_error_panic_hook::set_once();
-    console_log::init_with_level(log::Level::Info).expect("Failed to initialize logger");
+    let _ = console_log::init_with_level(log::Level::Info);
     log::info!("Fractal Madness starting...");
 }
 
@@ -414,6 +414,7 @@ fn sync_canvas_size(window: &winit::window::Window, gpu: &mut WebGpuState) {
         .and_then(|doc| doc.get_element_by_id(html::CANVAS_ID))
         .and_then(|el| el.dyn_into::<web_sys::HtmlCanvasElement>().ok())
     else {
+        log::debug!("Canvas element not found, skipping sync");
         return;
     };
 

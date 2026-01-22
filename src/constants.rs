@@ -1,5 +1,29 @@
 //! Application-wide constants
 
+/// Input handling constants
+pub mod input {
+    /// Divisor for converting pixel scroll delta to normalized scroll value
+    pub const SCROLL_PIXEL_DIVISOR: f32 = 100.0;
+    /// Multiplier for converting scroll value to zoom factor
+    pub const ZOOM_SCROLL_MULTIPLIER: f32 = 0.1;
+}
+
+/// Performance warning thresholds per fractal type
+pub mod performance {
+    /// Newton fractal iteration warning threshold (3.5x cost)
+    pub const NEWTON_WARNING_THRESHOLD: u32 = 140;
+    /// Phoenix fractal iteration warning threshold (1.5x cost)
+    pub const PHOENIX_WARNING_THRESHOLD: u32 = 330;
+    /// Julia variant (Buffalo/Celtic) iteration warning threshold (1.2x cost)
+    pub const JULIA_VARIANT_WARNING_THRESHOLD: u32 = 400;
+    /// Celtic fractal iteration warning threshold (1.15x cost)
+    pub const CELTIC_WARNING_THRESHOLD: u32 = 430;
+    /// Escape variant (Tricorn/BurningShip) iteration warning threshold (1.1x cost)
+    pub const ESCAPE_VARIANT_WARNING_THRESHOLD: u32 = 450;
+    /// Baseline (Mandelbrot/Julia) iteration warning threshold
+    pub const BASELINE_WARNING_THRESHOLD: u32 = 500;
+}
+
 /// Default canvas dimensions
 pub mod canvas {
     /// Default canvas width
