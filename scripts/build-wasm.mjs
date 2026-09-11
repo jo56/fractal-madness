@@ -7,7 +7,8 @@ import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { delimiter, join } from 'node:path';
 
-const cargoBin = join(homedir(), '.cargo', 'bin');
+const cargoHome = join(homedir(), '.cargo');
+const cargoBin = join(cargoHome, 'bin');
 process.env.PATH = `${cargoBin}${delimiter}${process.env.PATH ?? ''}`;
 
 function has(cmd) {
@@ -36,12 +37,17 @@ if (!has('wasm-pack')) {
     process.exit(1);
   }
 
+  // Some hosted images (Cloudflare Pages) preset CARGO_HOME/RUSTUP_HOME to a
+  // read-only location such as /opt/rust, so install under $HOME instead.
+  process.env.CARGO_HOME = cargoHome;
+  process.env.RUSTUP_HOME = join(homedir(), '.rustup');
+
   if (!has('cargo')) {
-    console.log('Rust toolchain not found; installing via rustup into ~/.cargo ...');
+    console.log(`Rust toolchain not found; installing via rustup into ${cargoHome} ...`);
     sh('curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path');
   }
 
-  console.log('wasm-pack not found; installing prebuilt binary into ~/.cargo/bin ...');
+  console.log(`wasm-pack not found; installing prebuilt binary into ${cargoBin} ...`);
   sh('curl -sSf https://rustwasm.github.io/wasm-pack/installer/init.sh | sh');
 }
 
